@@ -94,18 +94,33 @@ int create_file(char* name,char* extension) {
     return EXIT_SUCCESS;
 }
 
-void delete_file(){
+int delete_file(char* name,char* extension){
     int fd;
     size_t nbytes;
+    int offset=0;
     file_block result;
+
     fd = open(file_system_name, O_RDWR);
     nbytes = sizeof(file_block);
 
-    for(int index=0;index<block_count;index++){
-        lseek(fd, index*nbytes, SEEK_SET);
+    while(1){
+        lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
-        printf("%s.%s\n",result.name,result.extension);
+
+        if(!(strcmp(result.name,name)||strcmp(result.extension,extension))){
+            result.is_free=1;
+            lseek(fd, offset, SEEK_SET);
+            write(fd, &result, nbytes);
+            if(result.next==-1)
+                break;
+            else
+                offset=result.next*nbytes;
+        }
+        else
+            offset+=nbytes;
     }
+    close(fd);
+    return EXIT_SUCCESS;
 }
 
 int init_file_system(char* name,uint32_t size){
@@ -147,10 +162,7 @@ int file_size(int fd) {
 }
 
 void set_file_system_name(char* name){
-   // file_system_name= (char*)malloc(strlen(name) + 1);
-    //strcpy(file_system_name, name);
     file_system_name=name;
-    //file_system_name="1.txt";
 }
 
 void print_all_file(){

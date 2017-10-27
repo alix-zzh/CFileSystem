@@ -10,6 +10,9 @@ int main(int argc, char **argv) {
    create_file("test1","txt");
    create_file("test2","sql");
    print_all_file();
+   delete_file("test1","txt");
+   print_all_file();
+
 }
 
 
