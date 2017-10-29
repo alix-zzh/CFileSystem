@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdint.h>     /* uint32_t */
+#include <stdint.h>
 #include <fcntl.h>
 #include <string.h>
 #include <errno.h>
@@ -13,7 +13,92 @@
 
 const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
-int read_all_file(char* name,char* extension) {
+int init_file_system(char* name,int system_size){
+    int fd;
+   size_t nbytes;
+   file_block result;
+    fd = creat(name, mode);
+    ftruncate(fd, system_size*sizeof(file_block));
+
+   if (fd < 0) {
+      fprintf(stderr, "Unable to open  %s\n",strerror(errno));
+      exit(EXIT_FAILURE);
+   }
+
+   nbytes = sizeof(file_block);
+    for(int index=0;index<system_size;index++){
+        result.number = index;
+        result.next = -1;
+        result.is_free= 1;
+        result.is_start= 1;
+        result.free_size=sizeof(result.value);
+
+    write(fd, &result, nbytes);
+    }
+    close(fd);
+
+    return SUCCESSFUL_CODE;
+}
+
+int create_file(char* name) {
+    int fd;
+    size_t nbytes;
+    file_block result;
+    fd = open(file_system_name, O_RDWR);
+    nbytes = sizeof(file_block);
+    int offset=0;
+    int is_find=0;
+    block_count=file_size(fd)/nbytes;
+    for(int index=0;index<block_count;index++){
+       lseek(fd, offset, SEEK_SET);
+        read(fd, &result, nbytes);
+        if(result.is_free==1){
+            is_find=1;
+            break;
+        }
+        offset+=nbytes;
+    }
+    if(is_find){
+        memcpy(result.name,name,strlen(name)+1);
+        result.is_free=0;
+        lseek(fd, offset, SEEK_SET);
+        write(fd, &result, nbytes);
+    }
+    close(fd);
+
+    return SUCCESSFUL_CODE;
+}
+
+int delete_file(char* name){
+    int fd;
+    size_t nbytes;
+    int offset=0;
+    file_block result;
+
+    fd = open(file_system_name, O_RDWR);
+    nbytes = sizeof(file_block);
+
+    while(1){
+        lseek(fd, offset, SEEK_SET);
+        read(fd, &result, nbytes);
+
+        if(!(strcmp(result.name,name))){
+            result.is_free=1;
+            lseek(fd, offset, SEEK_SET);
+            write(fd, &result, nbytes);
+            if(result.next==-1)
+                break;
+            else
+                offset=result.next*nbytes;
+        }
+        else
+            offset+=nbytes;
+    }
+    close(fd);
+    return SUCCESSFUL_CODE;
+}
+
+int read_all_file(char* name) {
    int fd;
    size_t nbytes;
    file_block result;
@@ -35,10 +120,10 @@ int read_all_file(char* name,char* extension) {
 
 
 
-   return EXIT_SUCCESS;
+   return SUCCESSFUL_CODE;
 }
 
-int write_file(char* name,char* extension,char* value) {
+int write_file(char* name,char* value) {
    int fd;
    size_t nbytes;
    file_block result;
@@ -58,97 +143,170 @@ int write_file(char* name,char* extension,char* value) {
 
    close(fd);
 
-
-
-
-   return EXIT_SUCCESS;
+   return SUCCESSFUL_CODE;
 }
 
-int create_file(char* name,char* extension) {
+int copy_file(char* name){
     int fd;
     size_t nbytes;
+    int offset=0;
     file_block result;
+    int start_pos=0;
+    int copy_size=0;
+    int is_find=0;
+
     fd = open(file_system_name, O_RDWR);
     nbytes = sizeof(file_block);
-    int offset=0;
-    int is_find=0;
     block_count=file_size(fd)/nbytes;
+
     for(int index=0;index<block_count;index++){
        lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
-        if(result.is_free==1){
+        if(!(strcmp(result.name,name)) && result.is_start){
+            start_pos=result.number;
+            is_find=1;
+            for(int index=0;index<block_count;index++){
+               lseek(fd, start_pos, SEEK_SET);
+                read(fd, &result, nbytes);
+                if(result.next!=-1){
+                    copy_size+=result.number;
+                    offset=result.next*nbytes;
+                }
+                else
+                    break;
+
+            }
+            break;
+        }
+        offset+=nbytes;
+    }
+    int index=0;
+    if(is_find){
+        int free_size=get_free_file_system_size(fd);
+        //printf("%i\n",free_size);
+        char* copy_name="copy";
+        offset=start_pos;
+        int prev=-1;
+        if(free_size>copy_size){
+            for(int i=0;i<block_count;i++){
+                int free_offset=0;
+                lseek(fd, offset*nbytes, SEEK_SET);
+                read(fd, &result, nbytes);
+                for(;index<block_count;index++){
+                    file_block block;
+                    lseek(fd, index*nbytes, SEEK_SET);
+                    read(fd, &block, nbytes);
+
+                    if(block.is_free){
+                        memcpy(block.name, copy_name, sizeof(block.name));
+                        memcpy(block.value, result.value, sizeof(result.value)-result.free_size+1);
+                        block.free_size=result.free_size;
+                        block.is_free=0;
+                        block.is_start=result.is_start;
+                        if(prev==-1){
+                           block.next=-1;
+                        }
+                        else{
+                            file_block prev_block;
+                            lseek(fd, prev*nbytes, SEEK_SET);
+                            read(fd, &prev_block, nbytes);
+                            prev_block.next=block.number;
+                        }
+                        prev=block.number;
+
+
+                        lseek(fd, index*nbytes, SEEK_SET);
+                        write(fd,&block,nbytes);
+                        break;
+                    }
+
+                }
+                if(result.next!=-1)
+                    offset=result.next*nbytes;
+                else
+                    break;
+            }
+        }
+        else
+            printf("Not memory to copy %s",name);
+            close(fd);
+            return -2;
+    }
+    else{
+        printf("File not found %s",name);
+        close(fd);
+        return -1;
+    }
+    close(fd);
+    return 0;
+}
+
+int rename_file(char* name,char* new_name){
+    int fd;
+    size_t nbytes;
+    int offset=0;
+    file_block result;
+    int is_find=0;
+    int start_pos=0;
+
+    fd = open(file_system_name, O_RDWR);
+    nbytes = sizeof(file_block);
+    block_count=file_size(fd)/nbytes;
+
+    for(int index=0;index<block_count;index++){
+        lseek(fd, offset, SEEK_SET);
+        read(fd, &result, nbytes);
+
+        if(!(strcmp(result.name,name)) && result.is_start){
+            start_pos=result.number;
             is_find=1;
             break;
         }
         offset+=nbytes;
     }
+    offset=start_pos*nbytes;
     if(is_find){
-        sprintf(result.name,name);
-        sprintf(result.extension,extension);
-        result.is_free=0;
-        lseek(fd, offset, SEEK_SET);
-        write(fd, &result, nbytes);
+        for(int index=0;index<block_count;index++){
+            lseek(fd, offset, SEEK_SET);
+            read(fd, &result, nbytes);
+
+            memcpy(result.name, new_name, sizeof(result.name));
+
+            lseek(fd, offset, SEEK_SET);
+            write(fd, &result, nbytes);
+            if(result.next!=-1)
+                offset=result.next*nbytes;
+            else
+                break;
+        }
+    }
+    else{
+        printf("File not found %s",name);
+        close(fd);
+        return -1;
     }
     close(fd);
-
-    return EXIT_SUCCESS;
+    return 0;
 }
 
-int delete_file(char* name,char* extension){
-    int fd;
+int get_free_file_system_size(int fd){
     size_t nbytes;
     int offset=0;
     file_block result;
-
-    fd = open(file_system_name, O_RDWR);
+    int free_size=0;
     nbytes = sizeof(file_block);
 
-    while(1){
-        lseek(fd, offset, SEEK_SET);
+    block_count=file_size(fd)/nbytes;
+
+    for(int index=0;index<block_count;index++){
+       lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
-
-        if(!(strcmp(result.name,name)||strcmp(result.extension,extension))){
-            result.is_free=1;
-            lseek(fd, offset, SEEK_SET);
-            write(fd, &result, nbytes);
-            if(result.next==-1)
-                break;
-            else
-                offset=result.next*nbytes;
+        if( result.is_free){
+            free_size+=sizeof(result.value);
         }
-        else
-            offset+=nbytes;
+        offset+=nbytes;
     }
-    close(fd);
-    return EXIT_SUCCESS;
-}
-
-int init_file_system(char* name,uint32_t size){
-    block_count=size-1;
-    int fd;
-   size_t nbytes;
-   file_block result;
-    fd = creat(name, mode);
-    ftruncate(fd, 3*sizeof(file_block));
-
-   if (fd < 0) {
-      fprintf(stderr, "Unable to open  %s\n",strerror(errno));
-      exit(EXIT_FAILURE);
-   }
-
-   nbytes = sizeof(file_block);
-    for(int index=0;index<size;index++){
-        result.number = index;
-        result.next = -1;
-        result.is_free= 1;
-        result.is_start= 1;
-        result.free_size=sizeof(result.value);
-
-    write(fd, &result, nbytes);
-    }
-    close(fd);
-
-    return 0;
+    return free_size;
 }
 
 int file_size(int fd) {
@@ -176,8 +334,12 @@ void print_all_file(){
         lseek(fd, index*nbytes, SEEK_SET);
         read(fd, &result, nbytes);
         if(!result.is_free)
-            printf("%s.%s\n",result.name,result.extension);
+            printf("%s\n",result.name);
     }
+}
+
+void print_block(file_block block){
+    printf("\n %s \n %i \n %i \n %s \n %i \n",block.name,block.number,block.next,block.value,block.is_free);
 }
 
 

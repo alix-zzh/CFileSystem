@@ -4,14 +4,20 @@
 
 
 int main(int argc, char **argv) {
-   init_file_system("1.txt",3);
-   // read_all_file("test1","txt");
-   set_file_system_name("1.txt");
-   create_file("test1","txt");
-   create_file("test2","sql");
+   init_file_system(argv[1],3);
+   set_file_system_name(argv[1]);
+   create_file(argv[2]);
+   create_file(argv[3]);
+   printf("\n");
    print_all_file();
-   delete_file("test1","txt");
+   copy_file("test1");
+   printf("\n");
    print_all_file();
+   rename_file("copy","test3");
+   printf("\n");
+   print_all_file();
+//   delete_file(argv[2]);
+ //  print_all_file();
 
 }
 
