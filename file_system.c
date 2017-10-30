@@ -106,14 +106,19 @@ int read_all_file(char* name) {
     nbytes = sizeof(file_block);
 
     int offset=0;
-    while(1){
+    for(int index=0;index<block_count;index++){
         lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
-        printf( "%s ",result.value);
-        if(result.next==-1)
-            break;
+        if(!(strcmp(result.name,name)) ){
+            printf("%s",result.value);
+            if(result.next==-1)
+               break;
+            else
+                offset=result.next*nbytes;
+        }
         else
-            offset=result.next*nbytes;
+            offset+=nbytes;
+
     }
    close(fd);
 
@@ -124,26 +129,99 @@ int read_all_file(char* name) {
 }
 
 int write_file(char* name,char* value) {
-   int fd;
-   size_t nbytes;
-   file_block result;
+    int fd;
+    size_t nbytes;
+    int offset=0;
+    file_block result;
+    int is_find=0;
+    int start_pos=0;
+
     fd = open(file_system_name, O_RDWR);
     nbytes = sizeof(file_block);
+    block_count=file_size(fd)/nbytes;
 
-    int offset=0;
-    while(1){
+    for(int index=0;index<block_count;index++){
         lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
-        printf( "%s ",result.value);
-        if(result.next==-1)
+
+        if(!(strcmp(result.name,name)) && result.is_start){
+            start_pos=result.number;
+            is_find=1;
             break;
-        else
-            offset=result.next*nbytes;
+        }
+        offset+=nbytes;
     }
+    offset=start_pos*nbytes;
+    int prev=-1;
+    int index=0;
+    if(is_find){
+        for(int index=0;index<block_count;index++){
+            lseek(fd, offset, SEEK_SET);
+            read(fd, &result, nbytes);
 
-   close(fd);
+            if(result.next!=-1)
+                offset=result.next*nbytes;
+            else{
+                int free_size=result.free_size;
+                for(int char_offset=0;char_offset<(strlen(value));char_offset+=free_size){
+                    prev=result.number;
+                    if(result.free_size==0){
+                        for(;index<block_count;index++){
+                            lseek(fd, index*nbytes, SEEK_SET);
+                            read(fd, &result, nbytes);
 
-   return SUCCESSFUL_CODE;
+                            if(result.is_free){
+                                result.is_free=0;
+                                result.is_start=0;
+                                memcpy(result.name, name, sizeof(result.name));
+                                if(prev==-1){
+                                   result.next=-1;
+                                }
+                                else{
+                                    file_block prev_block;
+                                    lseek(fd, prev*nbytes, SEEK_SET);
+                                    read(fd, &prev_block, nbytes);
+                                    prev_block.next=result.number;
+                                    lseek(fd, prev*nbytes, SEEK_SET);
+                                    write(fd,&prev_block,nbytes);
+
+                                }
+
+
+                                offset=index*nbytes;
+                                break;
+                            }
+
+                        }
+                    }
+
+//                    sleep(1);
+                    memcpy(result.value+(sizeof(result.value)-result.free_size),value+char_offset,result.free_size);
+                    //print_block(result);
+                    free_size=result.free_size;
+                    if(result.free_size>strlen(value))
+                        result.free_size-=strlen(value);
+                    else{
+                        result.free_size=0;
+                    }
+                    lseek(fd, offset, SEEK_SET);
+                    write(fd, &result, nbytes);
+
+                   // break;
+                }
+                break;
+
+            }
+
+        }
+    }
+    else{
+        printf("File not found %s",name);
+        close(fd);
+        return -1;
+    }
+    close(fd);
+    return 0;
 }
 
 int copy_file(char* name){
@@ -339,7 +417,7 @@ void print_all_file(){
 }
 
 void print_block(file_block block){
-    printf("\n %s \n %i \n %i \n %s \n %i \n",block.name,block.number,block.next,block.value,block.is_free);
+    printf("\n %s \n %i \n %s \n ",block.name,block.next,block.value);
 }
 
 
