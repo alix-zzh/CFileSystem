@@ -84,6 +84,7 @@ int delete_file(char* name){
 
         if(!(strcmp(result.name,name))){
             result.is_free=1;
+            result.free_size=VALUE_SIZE;
             lseek(fd, offset, SEEK_SET);
             write(fd, &result, nbytes);
             if(result.next==-1)
@@ -194,20 +195,16 @@ int write_file(char* name,char* value) {
 
                         }
                     }
-
-//                    sleep(1);
                     memcpy(result.value+(sizeof(result.value)-result.free_size),value+char_offset,result.free_size);
-                    //print_block(result);
-                    free_size=result.free_size;
-                    if(result.free_size>strlen(value))
-                        result.free_size-=strlen(value);
+                    int sz=strlen(value)-char_offset;
+                    if(sz<VALUE_SIZE)
+                        result.free_size=VALUE_SIZE-sz;
                     else{
                         result.free_size=0;
                     }
                     lseek(fd, offset, SEEK_SET);
                     write(fd, &result, nbytes);
 
-                   // break;
                 }
                 break;
 
@@ -412,12 +409,12 @@ void print_all_file(){
         lseek(fd, index*nbytes, SEEK_SET);
         read(fd, &result, nbytes);
         if(!result.is_free)
-            printf("%s\n",result.name);
+            print_block(result);
     }
 }
 
 void print_block(file_block block){
-    printf("\n %s \n %i \n %s \n ",block.name,block.next,block.value);
+    printf("\n name: %s \n index: %i \n next: %i \n value: %s \n free : %i\n ",block.name,block.number,block.next,block.value,block.free_size);
 }
 
 
