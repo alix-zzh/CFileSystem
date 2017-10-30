@@ -449,8 +449,8 @@ void print_all_file(){
     for(int index=0;index<block_count;index++){
         lseek(fd, index*nbytes, SEEK_SET);
         read(fd, &result, nbytes);
-        if(!result.is_free)
-            print_block(result);
+        if(!result.is_free && result.is_start)
+            printf("%s\n",result.name);
     }
 }
 
@@ -484,6 +484,5 @@ char* search_copy_name(char* name,int fd){
     for(int i = 0; i < NAME_SIZE; ++i)
         res[i] = copy_name[i];
 
-    printf("%s\n",copy_name);
     return res;
 }
