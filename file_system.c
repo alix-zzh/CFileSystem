@@ -195,9 +195,14 @@ int write_file(char* name,char* value) {
 
                         }
                     }
+
+
+
                     memcpy(result.value+(sizeof(result.value)-result.free_size),value+char_offset,result.free_size);
                     int sz=strlen(value)-char_offset;
-                    if(sz<VALUE_SIZE)
+
+                    printf("%i\n",sz);
+                    if(sz<result.free_size)
                         result.free_size=VALUE_SIZE-sz;
                     else{
                         result.free_size=0;
@@ -416,5 +421,3 @@ void print_all_file(){
 void print_block(file_block block){
     printf("\n name: %s \n index: %i \n next: %i \n value: %s \n free : %i\n ",block.name,block.number,block.next,block.value,block.free_size);
 }
-
-
