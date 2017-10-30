@@ -99,7 +99,8 @@ int delete_file(char* name){
     return SUCCESSFUL_CODE;
 }
 
-int read_all_file(char* name) {
+char* read_file(char* name,int start,int count) {
+    char* res = malloc(count);
    int fd;
    size_t nbytes;
    file_block result;
@@ -107,11 +108,43 @@ int read_all_file(char* name) {
     nbytes = sizeof(file_block);
 
     int offset=0;
+    int temp_count=0;
+    int counter=0;
     for(int index=0;index<block_count;index++){
         lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
         if(!(strcmp(result.name,name)) ){
-            printf("%s",result.value);
+            if((temp_count<=start && start<temp_count+VALUE_SIZE) || counter){
+                if((temp_count<=start && start<temp_count+VALUE_SIZE)){
+                    int size=0;
+                    if(count>VALUE_SIZE)
+                        size=VALUE_SIZE-start%VALUE_SIZE;
+                    else
+                        size=count;
+                    char* temp= malloc(size);
+                    memcpy(temp,result.value+(start-temp_count),size);
+                    strcat(res, temp);
+                    count-=size;
+                }
+                else{
+                    int size=0;
+                    if(count>VALUE_SIZE)
+                        size=VALUE_SIZE;
+                    else
+                        size=count;
+                    char* temp= malloc(size);
+                    memcpy(temp,result.value,size);
+                    strcat(res, temp);
+                    count-=size;
+                }
+
+                counter=1;
+
+                if(count<=0)
+                    break;
+            }
+            temp_count+=VALUE_SIZE;
+
             if(result.next==-1)
                break;
             else
@@ -126,7 +159,7 @@ int read_all_file(char* name) {
 
 
 
-   return SUCCESSFUL_CODE;
+   return res;
 }
 
 int write_file(char* name,char* value) {
@@ -140,7 +173,10 @@ int write_file(char* name,char* value) {
     fd = open(file_system_name, O_RDWR);
     nbytes = sizeof(file_block);
     block_count=file_size(fd)/nbytes;
-
+    if(strlen(value)>get_free_file_system_size(fd)){
+        printf("Not enough memory");
+        return -2;
+    }
     for(int index=0;index<block_count;index++){
         lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
@@ -201,7 +237,6 @@ int write_file(char* name,char* value) {
                     memcpy(result.value+(sizeof(result.value)-result.free_size),value+char_offset,result.free_size);
                     int sz=strlen(value)-char_offset;
 
-                    printf("%i\n",sz);
                     if(sz<result.free_size)
                         result.free_size=VALUE_SIZE-sz;
                     else{
@@ -245,7 +280,7 @@ int copy_file(char* name){
         if(!(strcmp(result.name,name)) && result.is_start){
             start_pos=result.number;
             is_find=1;
-            for(int index=0;index<block_count;index++){
+            for(int id=0;id<block_count;id++){
                lseek(fd, start_pos, SEEK_SET);
                 read(fd, &result, nbytes);
                 if(result.next!=-1){
@@ -263,14 +298,13 @@ int copy_file(char* name){
     int index=0;
     if(is_find){
         int free_size=get_free_file_system_size(fd);
-        //printf("%i\n",free_size);
-        char* copy_name="copy";
+        char* copy_name=search_copy_name(name,fd);
         offset=start_pos;
         int prev=-1;
         if(free_size>copy_size){
             for(int i=0;i<block_count;i++){
                 int free_offset=0;
-                lseek(fd, offset*nbytes, SEEK_SET);
+                lseek(fd, offset, SEEK_SET);
                 read(fd, &result, nbytes);
                 for(;index<block_count;index++){
                     file_block block;
@@ -291,6 +325,8 @@ int copy_file(char* name){
                             lseek(fd, prev*nbytes, SEEK_SET);
                             read(fd, &prev_block, nbytes);
                             prev_block.next=block.number;
+                            lseek(fd, prev*nbytes, SEEK_SET);
+                            write(fd, &prev_block, nbytes);
                         }
                         prev=block.number;
 
@@ -420,4 +456,34 @@ void print_all_file(){
 
 void print_block(file_block block){
     printf("\n name: %s \n index: %i \n next: %i \n value: %s \n free : %i\n ",block.name,block.number,block.next,block.value,block.free_size);
+}
+
+char* search_copy_name(char* name,int fd){
+    char copy_name[NAME_SIZE];
+
+    file_block result;
+    int nbytes = sizeof(file_block);
+    int block_count=file_size(fd)/nbytes;
+    for(int index=0;index<block_count;index++){
+        int is_find=0;
+        sprintf(copy_name, "%s(%d)",name,(index+1));
+        for(int id=0;id<block_count;id++){
+            lseek(fd, id*nbytes, SEEK_SET);
+            read(fd, &result, nbytes);
+
+            if(!(strcmp(result.name,copy_name)))
+                is_find=1;
+
+        }
+        if(!is_find)
+            break;
+
+
+    }
+    char *res = malloc(NAME_SIZE);
+    for(int i = 0; i < NAME_SIZE; ++i)
+        res[i] = copy_name[i];
+
+    printf("%s\n",copy_name);
+    return res;
 }

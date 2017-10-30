@@ -29,5 +29,6 @@ int     init_file_system(char* name,int system_size);
 int     file_size(int fd);
 void    set_file_system_name(char* name);
 void    print_all_file();
+char* search_copy_name(char* name,int fd);
 
 #endif // FILE_SYSTEM_H_INCLUDED
