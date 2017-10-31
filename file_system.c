@@ -9,23 +9,27 @@
 #include <sys/stat.h>
 #include <sys/io.h>
 #include <sys/mman.h>
+#include <math.h>
 #include "file_system.h"
 
-const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
 
 int init_file_system(char* name,int system_size){
+    if(system_size<=0){
+        return INCORRECT_PARAMETERS_ERROR;
+    }
     int fd;
-   size_t nbytes;
-   file_block result;
+    size_t nbytes;
+    file_block result;
+    const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     fd = creat(name, mode);
+    system_size =(int)ceil(system_size/VALUE_SIZE);
     ftruncate(fd, system_size*sizeof(file_block));
 
-   if (fd < 0) {
-      fprintf(stderr, "Unable to open  %s\n",strerror(errno));
-      exit(EXIT_FAILURE);
-   }
+    if (fd < 0) {
+        return UNKNOWN_ERROR;
+    }
 
-   nbytes = sizeof(file_block);
+    nbytes = sizeof(file_block);
     for(int index=0;index<system_size;index++){
         result.number = index;
         result.next = -1;
@@ -64,6 +68,8 @@ int create_file(char* name) {
         lseek(fd, offset, SEEK_SET);
         write(fd, &result, nbytes);
     }
+    else
+        return NOT_ENOUGH_MEMORY;
     close(fd);
 
     return SUCCESSFUL_CODE;
@@ -100,10 +106,13 @@ int delete_file(char* name){
 }
 
 char* read_file(char* name,int start,int count) {
-    char* res = malloc(count);
-   int fd;
-   size_t nbytes;
-   file_block result;
+    char* all_file_value = malloc(count);
+    if(start<=0 || count<=0 ){
+        return all_file_value;
+    }
+    int fd;
+    size_t nbytes;
+    file_block result;
     fd = open(file_system_name, O_RDONLY);
     nbytes = sizeof(file_block);
 
@@ -123,7 +132,7 @@ char* read_file(char* name,int start,int count) {
                         size=count;
                     char* temp= malloc(size);
                     memcpy(temp,result.value+(start-temp_count),size);
-                    strcat(res, temp);
+                    strcat(all_file_value, temp);
                     count-=size;
                 }
                 else{
@@ -134,7 +143,7 @@ char* read_file(char* name,int start,int count) {
                         size=count;
                     char* temp= malloc(size);
                     memcpy(temp,result.value,size);
-                    strcat(res, temp);
+                    strcat(all_file_value, temp);
                     count-=size;
                 }
 
@@ -156,10 +165,7 @@ char* read_file(char* name,int start,int count) {
     }
    close(fd);
 
-
-
-
-   return res;
+   return all_file_value;
 }
 
 int write_file(char* name,char* value) {
@@ -174,8 +180,7 @@ int write_file(char* name,char* value) {
     nbytes = sizeof(file_block);
     block_count=file_size(fd)/nbytes;
     if(strlen(value)>get_free_file_system_size(fd)){
-        printf("Not enough memory");
-        return -2;
+        return NOT_ENOUGH_MEMORY;
     }
     for(int index=0;index<block_count;index++){
         lseek(fd, offset, SEEK_SET);
@@ -192,7 +197,7 @@ int write_file(char* name,char* value) {
     int prev=-1;
     int index=0;
     if(is_find){
-        for(int index=0;index<block_count;index++){
+        for(int i=0;i<block_count;i++){
             lseek(fd, offset, SEEK_SET);
             read(fd, &result, nbytes);
 
@@ -253,12 +258,11 @@ int write_file(char* name,char* value) {
         }
     }
     else{
-        printf("File not found %s",name);
         close(fd);
-        return -1;
+        return FILE_NOT_FOUND;
     }
     close(fd);
-    return 0;
+    return SUCCESSFUL_CODE;
 }
 
 int copy_file(char* name){
@@ -303,7 +307,6 @@ int copy_file(char* name){
         int prev=-1;
         if(free_size>copy_size){
             for(int i=0;i<block_count;i++){
-                int free_offset=0;
                 lseek(fd, offset, SEEK_SET);
                 read(fd, &result, nbytes);
                 for(;index<block_count;index++){
@@ -344,17 +347,15 @@ int copy_file(char* name){
             }
         }
         else
-            printf("Not memory to copy %s",name);
             close(fd);
-            return -2;
+            return NOT_ENOUGH_MEMORY;
     }
     else{
-        printf("File not found %s",name);
         close(fd);
-        return -1;
+        return FILE_NOT_FOUND;
     }
     close(fd);
-    return 0;
+    return SUCCESSFUL_CODE;
 }
 
 int rename_file(char* name,char* new_name){
@@ -397,12 +398,11 @@ int rename_file(char* name,char* new_name){
         }
     }
     else{
-        printf("File not found %s",name);
         close(fd);
-        return -1;
+        return FILE_NOT_FOUND;
     }
     close(fd);
-    return 0;
+    return SUCCESSFUL_CODE;
 }
 
 int get_free_file_system_size(int fd){
@@ -428,11 +428,9 @@ int get_free_file_system_size(int fd){
 int file_size(int fd) {
    struct stat s;
    if (fstat(fd, &s) == -1) {
-      int saveErrno = errno;
-      fprintf(stderr, "fstat(%d) returned errno=%d.", fd, saveErrno);
-      return(-1);
+      return -1 ;
    }
-   return(s.st_size);
+   return (s.st_size);
 }
 
 void set_file_system_name(char* name){
