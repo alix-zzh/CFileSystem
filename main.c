@@ -1,26 +1,62 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "file_system.h"
+#include "test/init_tests.h"
+#include "test/create_tests.h"
+#include "test/delete_tests.h"
+#include "test/write_tests.h"
+#include <time.h>
 
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
+    init_tests();
+    create_tests();
+    delete_tests();
+    write_tests();
 
-    char* big_string ="big string to copy, very big and long... @Alex and Anton";
-    char* little_string="Write to test2";
+    char* big_string ="A123456789";
+    init_file_system(argv[1],4*10);
+    create_file("test1");
+    for(int i=0;i<2;i++)
+    write_file("test1",big_string);
 
-    init_file_system(argv[1],200);
-    set_file_system_name(argv[1]);
-    create_file(argv[2]);
-    create_file(argv[3]);
+    printf("%s\n",read_file("test1",0,20));
+/*
+    FILE *fp;
+    fp = fopen("res_static.txt", "w+");
 
-    write_file(argv[2],big_string);
-    write_file(argv[3],little_string);
-    copy_file(argv[2]);
-    copy_file(argv[2]);
-    print_all_file();
-    printf("%s\n",read_file("test1(2)",2,20));
+    for(int i=0;i<23*10;i++){
 
+        unsigned long start = clock();
 
+        read_file("test1",i,1);
+
+        unsigned long time_spent = (unsigned long)(clock() - start) ;
+
+        fprintf(fp, "%i \n",time_spent);
+
+    }
+
+/*
+
+//    char* ddd ="Big string to copy, very big and long... @Alex and Anton";
+
+            char* big_string ="A123456789A123456789A123456789A";
+            char* little_string="Write to test2";
+
+            init_file_system(argv[1],200);
+            create_file(argv[2]);
+            create_file(argv[3]);
+
+            write_file(argv[2],big_string);
+            write_file(argv[3],little_string);
+            copy_file(argv[2]);
+            copy_file(argv[2]);
+            print_all_file();
+            printf("%s\n",read_file("test1(2)",0,20));
+
+*/
 }
 
 
