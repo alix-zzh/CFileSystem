@@ -11,7 +11,7 @@
 #define FILE_NOT_FOUND -1;
 
 #define NAME_SIZE 10
-#define VALUE_SIZE 10
+#define VALUE_SIZE 8
 
 int     block_count;
 char*   file_system_name;
@@ -29,8 +29,8 @@ typedef struct block {
 int     init_file_system(char* file_name, int system_size); //V
 int     create_file(char* file_name);                       //V
 int     delete_file(char* file_name);                       //V
-int     write_file(char* file_name, char* value);           //V
-char*   read_file(char* file_name, int start, int count);
+int     write_file(char* file_name, void* value,int write_size);           //V
+int     read_file(void* buffer,char* file_name, int start, int count);
 int     copy_file(char* file_name);
 int     rename_file(char* file_name, char* new_name);
 

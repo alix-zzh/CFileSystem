@@ -5,6 +5,7 @@
 #include "test/create_tests.h"
 #include "test/delete_tests.h"
 #include "test/write_tests.h"
+#include "test/read_tests.h"
 #include <time.h>
 
 
@@ -14,14 +15,23 @@ int main(int argc, char **argv)
     create_tests();
     delete_tests();
     write_tests();
+    read_tests();
+    copy_tests();
 
-    char* big_string ="A123456789";
+/*
+    char* big_string ="Abcdefghiklmnop";
     init_file_system(argv[1],4*10);
     create_file("test1");
     for(int i=0;i<2;i++)
     write_file("test1",big_string);
 
-    printf("%s\n",read_file("test1",0,20));
+*/
+    int buffer_size=00;
+
+    char* temp_buffer = (char *) malloc(0);
+
+  //  printf("%i\n",read_file(temp_buffer,"test1",6,20));
+   // printf("%s",temp_buffer);
 /*
     FILE *fp;
     fp = fopen("res_static.txt", "w+");
