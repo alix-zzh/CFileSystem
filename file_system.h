@@ -26,10 +26,10 @@ typedef struct block {
     int  free_size;
 } file_block;
 
-int     init_file_system(char* file_name, int system_size); //V
-int     create_file(char* file_name);                       //V
-int     delete_file(char* file_name);                       //V
-int     write_file(char* file_name, void* value,int write_size);           //V
+int     init_file_system(char* file_name, int system_size);
+int     create_file(char* file_name);
+int     delete_file(char* file_name);
+int     write_file(char* file_name, void* value,int write_size);
 int     read_file(void* buffer,char* file_name, int start, int count);
 int     copy_file(char* file_name);
 int     rename_file(char* file_name, char* new_name);
@@ -37,7 +37,8 @@ int     rename_file(char* file_name, char* new_name);
 char*   search_copy_name(char* file_name, int fd);
 int     file_size(int fd);
 int     get_free_file_system_size(int fd);
-void    print_all_file();
 void    set_file_system_name(char* file_name);
+char**  get_files_name();
+int     get_files_count();
 
 #endif // FILE_SYSTEM_H_INCLUDED

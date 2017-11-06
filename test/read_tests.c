@@ -28,16 +28,16 @@ void read_begin_correct_test()
 {
     int err;
     init_file_system("file_system", 50);
-    char* text="big string to copy, very big and long... @Alex ";
-    char* resuit="big";
+    char* text="b";
+    char* resuit="b";
     create_file("test1");
     err=write_file("test1",text,strlen(text));
-    int buffer_size=3;
+    int buffer_size=1;
 
     char* temp_buffer = (char *) malloc(buffer_size);
     err=read_file(temp_buffer,"test1",0,buffer_size);
     assert(err == 0);
-    assert(memcmp(&resuit,&temp_buffer,buffer_size));
+    assert(memcmp(resuit,temp_buffer,buffer_size)==0);
 
 }
 
@@ -54,7 +54,7 @@ void read_center_correct_test()
     char* temp_buffer = (char *) malloc(buffer_size);
     err=read_file(temp_buffer,"test1",5,buffer_size);
     assert(err == 0);
-    assert(memcmp(&resuit,&temp_buffer,buffer_size));
+    assert(memcmp(resuit,temp_buffer,buffer_size)==0);
 }
 
 void read_end_correct_test()
@@ -70,7 +70,7 @@ void read_end_correct_test()
     char* temp_buffer = (char *) malloc(10);
     err=read_file(temp_buffer,"test1",42,buffer_size);
     assert(err == 0);
-    assert(memcmp(&resuit,&temp_buffer,5));
+    assert(memcmp(resuit,temp_buffer,5)==0);
 }
 
 void read_not_char_test()
