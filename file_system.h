@@ -3,13 +3,25 @@
 
 #include <stdint.h>
 
-#define SUCCESSFUL_CODE  0;
-#define INCORRECT_PARAMETERS_ERROR -1;
-#define NOT_ENOUGH_MEMORY -2;
-#define FILE_NAME_ERROR -3;
-#define UNKNOWN_ERROR 1;
-#define FILE_NOT_FOUND -1;
+#define SUCCESSFUL_CODE  0
+#define INCORRECT_PARAMETERS_ERROR -1
+#define NOT_ENOUGH_MEMORY -2
+#define FILE_NAME_ERROR -3
+#define UNKNOWN_ERROR 1
+#define FILE_NOT_FOUND -1
 
+#define INIT 436
+#define TOUCH 547
+#define RM 223
+#define COPY 443
+#define MV 227
+#define WRITE 555
+#define READ 412
+#define DIR 319
+#define HELP 425
+
+#define COMMAND_SIZE 10
+#define MAX_WRITE_READ_VALUE 1024
 #define NAME_SIZE 10
 #define VALUE_SIZE 8
 
@@ -26,6 +38,7 @@ typedef struct block {
     int  free_size;
 } file_block;
 
+int     command_line();
 int     init_file_system(char* file_name, int system_size);
 int     create_file(char* file_name);
 int     delete_file(char* file_name);

@@ -21,8 +21,8 @@ int main(int argc, char **argv)
     rename_tests();
     copy_tests();
     printf("Test complete\n");
-/*
-    FILE *fp;
+
+    /*FILE *fp;
     fp = fopen("res_static.txt", "w+");
     init_file_system("file_system", 400);
     char* text="big string to copy, very big and long... @Alex big string to copy, very big and long... @Alex big string to copy, very big and long... @Alex big string to copy, very big and long... @Alex";
@@ -44,6 +44,7 @@ int main(int argc, char **argv)
 
     }
 */
+    command_line();
 }
 
 
