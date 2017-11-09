@@ -120,7 +120,7 @@ int command_line(){
             }
             break;
         case HELP:
-            printf("init\ntouch\nrm\ncopy\nmv\nwrite\nread\ndir\n");
+            printf("init: name, size\ntouch: name\nrm: name\ncopy: name\nmv: name\nwrite: name, value\nread: name, begin, amount\ndir\n");
             break;
         }
     }
