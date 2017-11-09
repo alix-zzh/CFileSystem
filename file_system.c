@@ -22,6 +22,9 @@ int init_file_system(char* file_name, int system_size)
     file_block result;
     const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     fd = creat(file_name, mode);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
     system_size = (int)ceil(system_size / VALUE_SIZE);
     ftruncate(fd, system_size * nbytes);
 
@@ -50,6 +53,9 @@ int create_file(char* file_name)
     size_t nbytes;
     file_block result;
     fd = open(file_system_name, O_RDWR);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
     nbytes = sizeof(file_block);
     int offset = 0;
     int is_find = 0;
@@ -92,6 +98,9 @@ int delete_file(char* file_name)
     file_block result;
 
     fd = open(file_system_name, O_RDWR);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
     nbytes = sizeof(file_block);
     int is_find = 0;
 
@@ -130,6 +139,9 @@ int read_file(void* buffer,char* file_name, int start, int count)
     int is_find=0;
     file_block result;
     fd = open(file_system_name, O_RDONLY);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
     nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
     int offset = 0;
@@ -196,6 +208,9 @@ int write_file(char* file_name, void* value,int write_size)
     int size = 0;
 
     fd = open(file_system_name, O_RDWR);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
     nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
     for(int index = 0; index < block_count; index++) {
@@ -300,6 +315,9 @@ int copy_file(char* file_name)
     int is_find = 0;
 
     fd = open(file_system_name, O_RDWR);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
     nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
     for(int index = 0; index < block_count; index++) {
@@ -393,6 +411,9 @@ int rename_file(char* file_name, char* new_name)
     int start_pos = 0;
 
     fd = open(file_system_name, O_RDWR);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
     nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
 
@@ -463,6 +484,7 @@ int file_size(int fd)
 int set_file_system_name(char* file_name)
 {
     int fd = open(file_name, O_RDONLY);
+
     int nbytes = sizeof(file_block);
     if(fd==-1 || (file_size(fd) % nbytes))
         return INCORRECT_FILE_SYSTEM_NAME;
