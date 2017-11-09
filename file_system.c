@@ -12,122 +12,6 @@
 #include <math.h>
 #include "file_system.h"
 
-int command_line(){
-    char* command = (char*)malloc(COMMAND_SIZE * sizeof(char));
-    while(1){
-        printf("file_system:~$ ");
-        scanf("%s", command);
-        int code = 0;
-        for(int index = 0; index < strlen(command); index++){
-            code += command[index];
-        }
-
-        int err;
-        int amount_of_files = 0;
-        char* file_name = (char*)malloc(NAME_SIZE*sizeof(char));
-        switch(code){
-        case INIT:
-            scanf("%s", file_name);
-            int system_size;
-            scanf("%d", &system_size);
-            err = init_file_system(file_name, system_size);
-
-            if(err == INCORRECT_PARAMETERS_ERROR){
-                printf("Wrong parameters\n");
-            }
-            if(err == UNKNOWN_ERROR){
-                printf("Something wrong\n");
-            }
-            break;
-        case TOUCH:
-            scanf("%s", file_name);
-            err = create_file(file_name);
-
-            if(err == FILE_NAME_ERROR){
-                printf("Error with name of file\n");
-            }
-            if(err == NOT_ENOUGH_MEMORY){
-                printf("Memory is not enough to create file\n");
-            }
-            break;
-        case RM:
-            scanf("%s", file_name);
-            err = delete_file(file_name);
-
-            if(err == FILE_NAME_ERROR){
-                printf("No such file\n");
-            }
-            break;
-        case COPY:
-            scanf("%s", file_name);
-            err = copy_file(file_name);
-
-            if(err == NOT_ENOUGH_MEMORY){
-                printf("Memory is not enough to copy file\n");
-            }
-            if(err == FILE_NAME_ERROR){
-                printf("No such file\n");
-            }
-            break;
-        case MV:
-            scanf("%s", file_name);
-            char* new_file_name = (char*)malloc(NAME_SIZE*sizeof(char*));
-            scanf("%s", new_file_name);
-            err = rename_file(file_name, new_file_name);
-
-            if(err == FILE_NOT_FOUND){
-                printf("No such file\n");
-            }
-            break;
-        case WRITE:
-            scanf("%s", file_name);
-            char* value = (char*)malloc(MAX_WRITE_READ_VALUE * sizeof(char));
-            fgets(value, MAX_WRITE_READ_VALUE, stdin);
-            value++;
-            err = write_file(file_name, value, strlen(value));
-
-            if(err == NOT_ENOUGH_MEMORY){
-                printf("Memory is not enough to write in\n");
-            }
-            if(err == FILE_NOT_FOUND){
-                printf("No such file\n");
-            }
-            break;
-        case READ:
-            scanf("%s", file_name);
-            int start;
-            scanf("%d", &start);
-            int count;
-            scanf("%d", &count);
-            char* read_value = (char*)malloc(MAX_WRITE_READ_VALUE*sizeof(char));
-            err = read_file(read_value, file_name, start, count);
-
-            if(err == INCORRECT_PARAMETERS_ERROR){
-                printf("Wrong parameters\n");
-            }
-            if(err == FILE_NAME_ERROR){
-                printf("No such file\n");
-            }
-            if(err == SUCCESSFUL_CODE){
-                printf("%s\n", read_value);
-            }
-            break;
-        case DIR:
-            amount_of_files = get_files_count();
-            char** file_names = get_files_name();
-            for(int index = 0; index < amount_of_files; index++){
-                printf("%s\n", file_names[index]);
-            }
-            break;
-        case HELP:
-            printf("init: name, size\ntouch: name\nrm: name\ncopy: name\nmv: name\nwrite: name, value\nread: name, begin, amount\ndir\n");
-            break;
-        }
-    }
-
-    return SUCCESSFUL_CODE;
-}
-
 int init_file_system(char* file_name, int system_size)
 {
     if(system_size <= 0) {
@@ -156,7 +40,7 @@ int init_file_system(char* file_name, int system_size)
         write(fd, &result, nbytes);
     }
     close(fd);
-    set_file_system_name(file_name);
+    file_system_name = file_name;
     return SUCCESSFUL_CODE;
 }
 
@@ -247,7 +131,7 @@ int read_file(void* buffer,char* file_name, int start, int count)
     file_block result;
     fd = open(file_system_name, O_RDONLY);
     nbytes = sizeof(file_block);
-
+    block_count = file_size(fd) / nbytes;
     int offset = 0;
     int temp_count = 0;
     int counter = 0;
@@ -576,9 +460,15 @@ int file_size(int fd)
     return (s.st_size);
 }
 
-void set_file_system_name(char* file_name)
+int set_file_system_name(char* file_name)
 {
+    int fd = open(file_name, O_RDONLY);
+    int nbytes = sizeof(file_block);
+    if(fd==-1 || (file_size(fd) % nbytes))
+        return INCORRECT_FILE_SYSTEM_NAME;
+    close(fd);
     file_system_name = file_name;
+    return SUCCESSFUL_CODE;
 }
 
 char* search_copy_name(char* file_name, int fd)

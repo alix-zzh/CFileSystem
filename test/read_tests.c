@@ -2,6 +2,8 @@
 #include <malloc.h>
 #include "../file_system.h"
 #include "read_tests.h"
+#include <string.h>
+
 
 void read_file_name_error_test()
 {

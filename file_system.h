@@ -9,16 +9,7 @@
 #define FILE_NAME_ERROR -3
 #define UNKNOWN_ERROR 1
 #define FILE_NOT_FOUND -1
-
-#define INIT 436
-#define TOUCH 547
-#define RM 223
-#define COPY 443
-#define MV 227
-#define WRITE 555
-#define READ 412
-#define DIR 319
-#define HELP 425
+#define INCORRECT_FILE_SYSTEM_NAME -1
 
 #define COMMAND_SIZE 10
 #define MAX_WRITE_READ_VALUE 1024
@@ -50,7 +41,7 @@ int     rename_file(char* file_name, char* new_name);
 char*   search_copy_name(char* file_name, int fd);
 int     file_size(int fd);
 int     get_free_file_system_size(int fd);
-void    set_file_system_name(char* file_name);
+int    set_file_system_name(char* file_name);
 char**  get_files_name();
 int     get_files_count();
 
