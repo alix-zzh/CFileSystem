@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 #include <sys/io.h>
 #include <sys/mman.h>
-#include <math.h>
 #include "file_system.h"
 
 int init_file_system(char* file_name, int system_size)

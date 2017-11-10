@@ -2,6 +2,7 @@
 #define FILE_SYSTEM_H_INCLUDED
 
 #include <stdint.h>
+#include <math.h>
 
 #define SUCCESSFUL_CODE  0
 #define INCORRECT_PARAMETERS_ERROR -1

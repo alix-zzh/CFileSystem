@@ -24,16 +24,15 @@ void rename_currect_name_test()
 
 void rename_value_test()
 {
-    int err;
     init_file_system("file_system", 50);
     char* text="big string to copy, very big and long... @Alex ";
     create_file("test1");
     write_file("test1",text,strlen(text));
     int buffer_size=47;
-    err=rename_file("test1","new_file");
+    rename_file("test1","new_file");
 
     char* temp_buffer = (char *) malloc(buffer_size);
-    err=read_file(temp_buffer,"new_file",0,buffer_size);
+    read_file(temp_buffer,"new_file",0,buffer_size);
     assert(memcmp(text,temp_buffer,buffer_size)==0);
 }
 

@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "../file_system.h"
+#include <string.h>
 #include "create_tests.h"
 
 void write_file_not_find_test()
