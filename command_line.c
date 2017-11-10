@@ -15,7 +15,7 @@ int command_line()
         scanf("%s", command);
         int code = 0;
         for(int index = 0; index < strlen(command); index++) {
-            code += command[index];
+            code += command[index]*index*COUNT;
         }
 
         int err;
@@ -38,7 +38,7 @@ int command_line()
                 file_system_set = 1;
             }
             break;
-        case SET:
+        case SET_SYSTEM:
             scanf("%s", file_name);
             err = set_file_system_name(file_name);
 
@@ -151,13 +151,13 @@ int command_line()
                 printf("Set or init file system\n");
             break;
         case HELP:
-            printf("init: name, size\nset: name\ntouch: name\nrm: name\ncopy: name\nmv: name\nwrite: name, value\nread: name, begin, amount\ndir\n");
+            printf("init: name, size\nset_system: name\ntouch: name\nrm: name\ncopy: name\nmv: name\nwrite: name, value\nread: name, begin, amount\ndir\n");
             break;
         case EXIT:
             exit = 0;
             break;
         default:
-            printf("No such command  \n");
+            printf("No such command  %i\n",code);
 
         }
     }

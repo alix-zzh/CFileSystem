@@ -78,7 +78,7 @@ int create_file(char* file_name)
         offset += nbytes;
     }
     if(is_find) {
-        memcpy(result.file_name, file_name, strlen(file_name) + 1);
+        memcpy(result.file_name, file_name, NAME_SIZE);
         result.is_free = 0;
         lseek(fd, offset, SEEK_SET);
         write(fd, &result, nbytes);
