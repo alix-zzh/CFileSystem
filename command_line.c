@@ -121,7 +121,7 @@ int command_line()
                     printf("No such file\n");
                 }
                 if(err == SUCCESSFUL_CODE) {
-                    printf("%s", read_value);
+                    printf("%s\n", read_value);
                 }
             } else
                 printf("Set or init file system\n");
@@ -155,7 +155,6 @@ int command_line()
             break;
         case EXIT:
             exit = 0;
-            printf("Exit\n");
             break;
         default:
             printf("No such command  \n");

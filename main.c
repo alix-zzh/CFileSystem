@@ -28,6 +28,6 @@ int main(int argc, char **argv)
 {
 
     tests();
-    load_test();
+    //load_test();
     command_line();
 }
