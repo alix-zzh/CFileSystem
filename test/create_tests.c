@@ -14,7 +14,7 @@ void create_correct_test()
 
 void create_not_enough_memory_test()
 {
-    init_file_system("file_system", 20);
+    init_file_system("file_system", 16);
     int err = create_file("test1");
     assert(err == 0);
     err = create_file("test2");

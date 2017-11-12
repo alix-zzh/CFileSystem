@@ -15,12 +15,12 @@
 
 void tests(){
     init_tests();
-    create_tests();
-    delete_tests();
-    write_tests();
-    read_tests();
-    rename_tests();
-    copy_tests();
+  //  create_tests();
+   // delete_tests();
+  //  write_tests();
+   // read_tests();
+  //  rename_tests();
+   // copy_tests();
     printf("Test complete\n");
 }
 
@@ -29,5 +29,5 @@ int main(int argc, char **argv)
 
     tests();
     //load_test();
-    command_line();
+    //command_line();
 }

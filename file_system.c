@@ -19,6 +19,7 @@ int init_file_system(char* file_name, int system_size)
     int fd;
     size_t nbytes = sizeof(file_block);;
     file_block result;
+    file_catalog catalog;
     const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     fd = creat(file_name, mode);
     if(fd==-1)
@@ -31,7 +32,6 @@ int init_file_system(char* file_name, int system_size)
         return UNKNOWN_ERROR;
     }
 
-
     for(int index = 0; index < system_size; index++) {
         result.number = index;
         result.next = -1;
@@ -41,6 +41,16 @@ int init_file_system(char* file_name, int system_size)
 
         write(fd, &result, nbytes);
     }
+/*
+    for(int index = 0; index < system_size; index++) {
+        result.number = index;
+        result.next = -1;
+        result.is_free = 1;
+        result.is_start = 1;
+        result.free_size = VALUE_SIZE;
+
+        write(fd, &result, nbytes);
+    }*/
     close(fd);
     file_system_name = file_name;
     return SUCCESSFUL_CODE;
@@ -130,6 +140,9 @@ int delete_file(char* file_name)
 
 int read_file(void* buffer,char* file_name, int start, int count)
 {
+    unsigned char* data = (unsigned char *)malloc(count);
+    int buffer_size=count;
+    int sz=0;
     if(start < 0 || count <= 0 ) {
         return INCORRECT_PARAMETERS_ERROR;
     }
@@ -158,9 +171,12 @@ int read_file(void* buffer,char* file_name, int start, int count)
                         size = VALUE_SIZE - start % VALUE_SIZE;
                     else
                         size = count;
-                    char* temp = malloc(size);
+                    unsigned char* temp = (unsigned char*)malloc(size);
+                    //printf("%i\n",size);
                     memcpy(temp, result.value + (start - temp_count), size);
-                    strcat(buffer, temp);
+                    memcpy(data+sz, temp, size);
+                    sz+=size;
+                    //strcat(buffer, temp);
                     count -= size;
                 } else {
                     int size = 0;
@@ -168,9 +184,12 @@ int read_file(void* buffer,char* file_name, int start, int count)
                         size = VALUE_SIZE;
                     else
                         size = count;
-                    char* temp = malloc(size);
+                    unsigned char* temp = (unsigned char*)malloc(size);
                     memcpy(temp, result.value, size);
-                    strcat(buffer, temp);
+                    memcpy(data+sz, temp, size);
+                    sz+=size;
+                    //printf("%i\n",size);
+                    //strcat(buffer, temp);
                     count -= size;
                 }
 
@@ -191,8 +210,11 @@ int read_file(void* buffer,char* file_name, int start, int count)
     }
 
     close(fd);
-    if(is_find)
+    if(is_find){
+        memcpy(buffer, data, buffer_size);
         return SUCCESSFUL_CODE;
+    }
+
     return FILE_NAME_ERROR;
 }
 
@@ -573,3 +595,5 @@ int get_files_count(){
     close(fd);
     return count;
 }
+
+

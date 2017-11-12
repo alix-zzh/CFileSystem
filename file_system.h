@@ -12,7 +12,6 @@
 #define FILE_NOT_FOUND -1
 #define INCORRECT_FILE_SYSTEM_NAME -1
 
-#define COMMAND_SIZE 10
 #define MAX_WRITE_READ_VALUE 1024
 #define NAME_SIZE 10
 #define VALUE_SIZE 8
@@ -21,7 +20,7 @@ int     block_count;
 char*   file_system_name;
 
 typedef struct block {
-    char file_name[NAME_SIZE];
+    unsigned char file_name[NAME_SIZE];
     int  number;
     int  next;
     char value[VALUE_SIZE];
@@ -29,6 +28,19 @@ typedef struct block {
     int  is_start;
     int  free_size;
 } file_block;
+
+typedef struct new_block {
+    int  next;
+    char value[VALUE_SIZE];
+    int  is_free;
+} new_file_block;
+
+typedef struct catalog {
+    char file_name[NAME_SIZE];
+    int  start;
+    int  is_free;
+    int  free_size;
+} file_catalog;
 
 int     command_line();
 int     init_file_system(char* file_name, int system_size);

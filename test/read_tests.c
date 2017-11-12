@@ -79,19 +79,47 @@ void read_not_char_test()
 {
     int err;
     int buffer_size=sizeof(int);
-    init_file_system("file_system", 16);
+    init_file_system("file_system", 60);
     int number=13;
-    int* test= (int *) malloc(buffer_size);
-    test=&number;
+
     create_file("test1");
     err=write_file("test1","testtt",strlen("testtt"));
-    err=write_file("test1",test,sizeof(int));
+    assert(err == 0);
+    err=write_file("test1",&number,buffer_size);
+
     assert(err == 0);
 
     int* temp_buffer = (int *) malloc(buffer_size);
-    err=read_file(temp_buffer,"test1",6,sizeof(test));
+    err=read_file(temp_buffer,"test1",6,buffer_size);
     assert(err == 0);
+
     assert(number==*temp_buffer);
+}
+
+void read_struct_test()
+{
+    int err;
+    int buffer_size=sizeof(file_block);
+    init_file_system("file_system", 1000);
+    file_block result;
+
+
+    memcpy(result.value, "LOL", 3);
+    create_file("test1");
+    err=write_file("test1",&result,buffer_size);
+    assert(err == 0);
+
+    file_block* temp_buffer = (file_block *) malloc(buffer_size);
+
+    memcpy(result.value, "Kek", 3);
+    err=write_file("test1",&result,buffer_size);
+    err=read_file(temp_buffer,"test1",buffer_size,buffer_size);
+    assert(err == 0);
+    char *str =&(temp_buffer)->value;
+
+
+    assert(memcmp(result.value,str,3)==0);
+    //printf("%s %s\n",result.value,str);
 }
 
 void read_tests()
@@ -102,5 +130,6 @@ void read_tests()
     read_center_correct_test();
     read_end_correct_test();
     read_not_char_test();
+    read_struct_test();
 
 }

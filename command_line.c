@@ -15,7 +15,7 @@ int command_line()
         scanf("%s", command);
         int code = 0;
         for(int index = 0; index < strlen(command); index++) {
-            code += command[index]*index*COUNT;
+            code += command[index]*(index+1)*COUNT;
         }
 
         int err;
@@ -38,7 +38,7 @@ int command_line()
                 file_system_set = 1;
             }
             break;
-        case SET_SYSTEM:
+        case SET:
             scanf("%s", file_name);
             err = set_file_system_name(file_name);
 
@@ -140,7 +140,7 @@ int command_line()
             } else
                 printf("Set or init file system\n");
             break;
-        case DIR:
+        case LS:
             if(file_system_set) {
                 amount_of_files = get_files_count();
                 char** file_names = get_files_name();
