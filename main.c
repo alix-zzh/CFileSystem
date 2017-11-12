@@ -15,7 +15,7 @@
 
 void tests(){
     init_tests();
-  //  create_tests();
+    create_tests();
    // delete_tests();
   //  write_tests();
    // read_tests();
@@ -26,6 +26,8 @@ void tests(){
 
 int main(int argc, char **argv)
 {
+
+
 
     tests();
     //load_test();

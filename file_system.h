@@ -13,12 +13,12 @@
 #define INCORRECT_FILE_SYSTEM_NAME -1
 
 #define MAX_WRITE_READ_VALUE 1024
-#define NAME_SIZE 10
+#define NAME_SIZE 5
 #define VALUE_SIZE 8
 
 int     block_count;
 char*   file_system_name;
-
+/*
 typedef struct block {
     unsigned char file_name[NAME_SIZE];
     int  number;
@@ -28,11 +28,12 @@ typedef struct block {
     int  is_start;
     int  free_size;
 } file_block;
-
+*/
 typedef struct new_block {
     int  next;
     char value[VALUE_SIZE];
-    int  is_free;
+    int  free_size;
+    int  number;
 } new_file_block;
 
 typedef struct catalog {

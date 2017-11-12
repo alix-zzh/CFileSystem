@@ -35,6 +35,6 @@ void create_file_name_error_test()
 void create_tests()
 {
     create_correct_test();
-    create_file_name_error_test();
-    create_not_enough_memory_test();
+   // create_file_name_error_test();
+    //create_not_enough_memory_test();
 }
