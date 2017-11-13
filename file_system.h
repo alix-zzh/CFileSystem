@@ -13,7 +13,7 @@
 #define INCORRECT_FILE_SYSTEM_NAME -1
 
 #define MAX_WRITE_READ_VALUE 1024
-#define NAME_SIZE 5
+#define NAME_SIZE 9
 #define VALUE_SIZE 8
 
 int     block_count;

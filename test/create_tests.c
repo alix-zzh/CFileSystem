@@ -4,7 +4,7 @@
 
 void create_correct_test()
 {
-    init_file_system("file_system", 20);
+    init_file_system("file_system", 24);
     int err = create_file("test1");
     assert(err == 0);
     err = create_file("test2");
@@ -35,6 +35,6 @@ void create_file_name_error_test()
 void create_tests()
 {
     create_correct_test();
-   // create_file_name_error_test();
-    //create_not_enough_memory_test();
+    create_file_name_error_test();
+    create_not_enough_memory_test();
 }

@@ -26,15 +26,17 @@ int init_file_system(char* file_name, int system_size)
         return UNKNOWN_ERROR;
 
     system_size = (int)ceil(system_size / VALUE_SIZE);
-    int block_from_catalog = (int)ceil((system_size * cbytes) / VALUE_SIZE);
+    double temp =(system_size * cbytes);
+    int block_from_catalog = (int)ceil(temp / VALUE_SIZE);
 
-    ftruncate(fd, (system_size + block_from_catalog) * nbytes);
+    system_size +=block_from_catalog;
+    ftruncate(fd, (system_size ) * nbytes);
 
     if (fd < 0) {
         return UNKNOWN_ERROR;
     }
 
-    for(int index = 0; index < system_size + block_from_catalog; index++) {
+    for(int index = 0; index < system_size ; index++) {
         result.next = -1;
         result.number = index;
         result.free_size = VALUE_SIZE;
@@ -68,63 +70,70 @@ int create_file(char* file_name)
     int cbytes = sizeof(file_catalog);
 
     if(result.free_size == VALUE_SIZE) {
-        int sz = get_free_file_system_size(fd);
         memcpy(catalog.file_name, file_name, NAME_SIZE);
         catalog.is_free = 0;
         catalog.free_size = 0;
-        write_catalog(fd, &catalog, cbytes);
+        write_catalog_file(fd, &catalog, cbytes);
         int begin = search_free_block(fd);
-        sz = get_free_file_system_size(fd);
 
         file_catalog* temp_buffer = (file_catalog*)malloc(sizeof(file_catalog));
 
 
-        read_catalog(temp_buffer,fd,0, sizeof(file_catalog));
+        read_catalog_file(temp_buffer,fd,0, sizeof(file_catalog));
         file_catalog str =*(temp_buffer);
-        printf("%s\n",str.file_name);
+
         catalog.start = begin;
-        //write_catalog(fd, &catalog, cbytes);
+        change_catalog_file(fd,&catalog,0,cbytes);
+
     } else {
         int catlog_size = 0;
+        offset = 0;
         for(int i = 0; i < block_count; i++) {
             lseek(fd, offset, SEEK_SET);
             read(fd, &result, nbytes);
+            offset=result.next*nbytes;
+            catlog_size+=VALUE_SIZE;
+            if(result.next==-1)
+                break;
         }
+        int file_count = (int)catlog_size/cbytes;
+
+        int pos=file_count*cbytes;
+        for(int i = 0; i < file_count; i++) {
+            file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+            read_catalog_file(temp_buffer,fd,cbytes*i, cbytes);
+            file_catalog file_header =*(temp_buffer);
+            if(!strcmp(file_header.file_name, file_name) && !file_header.is_free)
+                return FILE_NAME_ERROR;
+            if(file_header.is_free)
+                pos=cbytes*i;
+        }
+
+        memcpy(catalog.file_name, file_name, NAME_SIZE);
+        catalog.is_free = 0;
+        catalog.free_size = 0;
+        int sz = get_free_file_system_size(fd);
+        if(sz<cbytes+VALUE_SIZE)
+            return NOT_ENOUGH_MEMORY;
+
+        write_catalog_file(fd, &catalog, cbytes);
+        int begin = search_free_block(fd);
+
+
+        file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+
+        read_catalog_file(temp_buffer,fd,pos, cbytes);
+        file_catalog file_header =*(temp_buffer);
+
+        file_header.start = begin;
+        change_catalog_file(fd,&file_header,file_count*cbytes,cbytes);
 
     }
 
-    /*
-        for(int index = 0; index < block_count; index++) {
-            lseek(fd, offset, SEEK_SET);
-            read(fd, &result, nbytes);
-            if(!(strcmp(result.file_name, file_name) || result.is_free)) {
-                return FILE_NAME_ERROR;
-            }
-            offset += nbytes;
-        }
-        offset = 0;
-        for(int index = 0; index < block_count; index++) {
-            lseek(fd, offset, SEEK_SET);
-            read(fd, &result, nbytes);
-            if(result.is_free == 1) {
-                is_find = 1;
-                break;
-            }
-            offset += nbytes;
-        }
-        if(is_find) {
-            memcpy(result.file_name, file_name, NAME_SIZE);
-            result.is_free = 0;
-            lseek(fd, offset, SEEK_SET);
-            write(fd, &result, nbytes);
-        } else
-            return NOT_ENOUGH_MEMORY;
-        close(fd);
-    */
     return SUCCESSFUL_CODE;
 }
 
-int write_catalog(int fd, void* value, int write_size)
+int write_catalog_file(int fd, void* value, int write_size)
 {
     size_t nbytes;
     int offset = 0;
@@ -208,7 +217,71 @@ int write_catalog(int fd, void* value, int write_size)
     return SUCCESSFUL_CODE;
 }
 
-int read_catalog(void* buffer, int fd, int start, int count)
+
+int change_catalog_file(int fd,void* buffer, int start, int count)
+{
+    int buffer_size=count;
+    int sz=0;
+    if(start < 0 || count <= 0 ) {
+        return INCORRECT_PARAMETERS_ERROR;
+    }
+    size_t nbytes;
+    int is_find=0;
+    new_file_block result;
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
+    nbytes = sizeof(new_file_block);
+    block_count = file_size(fd) / nbytes;
+    int offset = 0;
+    int temp_count = 0;
+    int counter = 0;
+    for(int index = 0; index < block_count; index++) {
+        lseek(fd, offset, SEEK_SET);
+        read(fd, &result, nbytes);
+            if((temp_count <= start && start < temp_count + VALUE_SIZE) || counter) {
+                if((temp_count <= start && start < temp_count + VALUE_SIZE)) {
+                    int size = 0;
+
+                    size = VALUE_SIZE - start % VALUE_SIZE;
+                    memcpy(result.value+start % VALUE_SIZE,buffer+sz, size);
+                    sz+=size;
+                    count -= size;
+                } else {
+                    int size = 0;
+                    if(count > VALUE_SIZE)
+                        size = VALUE_SIZE;
+                    else
+                        size = count;
+                    memcpy(result.value,buffer+sz, size);
+
+                    sz+=size;
+                    count -= size;
+                }
+                lseek(fd, offset, SEEK_SET);
+                write(fd, &result, nbytes);
+
+                counter = 1;
+
+                if(count <= 0)
+                    break;
+            }
+                temp_count += VALUE_SIZE;
+
+
+            if(result.next == -1)
+                break;
+            else
+                offset = result.next * nbytes;
+
+    }
+
+    return SUCCESSFUL_CODE;
+
+}
+
+
+int read_catalog_file(void* buffer, int fd, int start, int count)
 {
     unsigned char* data = (unsigned char *)malloc(count);
     int buffer_size = count;
@@ -285,124 +358,79 @@ int read_catalog(void* buffer, int fd, int start, int count)
 
 
 
-/*
+
 int delete_file(char* file_name)
 {
-    int fd;
+   int fd;
     size_t nbytes;
-    int offset = 0;
-    file_block result;
-
+    new_file_block result;
     fd = open(file_system_name, O_RDWR);
-    if(fd==-1)
+    if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(file_block);
+    nbytes = sizeof(new_file_block);
+    int offset = 0;
     int is_find = 0;
+    block_count = file_size(fd) / nbytes;
 
-    while(1) {
-        lseek(fd, offset, SEEK_SET);
-        read(fd, &result, nbytes);
+    lseek(fd, offset, SEEK_SET);
+    read(fd, &result, nbytes);
 
-        if(!strcmp(result.file_name, file_name) && !result.is_free) {
-            is_find = 1;
-            result.is_free = 1;
-            result.free_size = VALUE_SIZE;
-            lseek(fd, offset, SEEK_SET);
-            write(fd, &result, nbytes);
-            if(result.next == -1)
-                break;
-            else
-                offset = result.next * nbytes;
-        } else
-            offset += nbytes;
-    }
-    close(fd);
+    file_catalog catalog;
+    int cbytes = sizeof(file_catalog);
 
-    if(!is_find)
+    if(result.free_size == VALUE_SIZE) {
         return FILE_NAME_ERROR;
+    } else {
+        int catlog_size = 0;
+        offset = 0;
+        int pos=0;
+        int find=0;
+        for(int i = 0; i < block_count; i++) {
+            lseek(fd, offset, SEEK_SET);
+            read(fd, &result, nbytes);
+            offset=result.next*nbytes;
+            catlog_size+=VALUE_SIZE;
+            if(result.next==-1)
+                break;
+        }
+        int file_count = (int)catlog_size/cbytes;
+
+
+        for(int i = 0; i < file_count; i++) {
+            file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+            read_catalog_file(temp_buffer,fd,cbytes*i, cbytes);
+            file_catalog file_header =*(temp_buffer);
+            if(!strcmp(file_header.file_name, file_name) && !file_header.is_free){
+                find=1;
+                pos=cbytes*i;
+            }
+        }
+        if(find){
+            file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+
+
+            read_catalog_file(temp_buffer,fd,pos, cbytes);
+            file_catalog file_header =*(temp_buffer);
+
+            file_header.is_free = 1;
+            change_catalog_file(fd,&file_header,pos,cbytes);
+            offset=file_header.start*nbytes;
+
+            for(int i = 0; i < block_count; i++) {
+                lseek(fd, offset, SEEK_SET);
+                read(fd, &result, nbytes);
+                result.free_size=VALUE_SIZE;
+                if(result.next==-1)
+                    break;
+                offset=result.next*nbytes;
+            }
+        }
+
+
+    }
 
     return SUCCESSFUL_CODE;
-}
-
-int read_file(void* buffer,char* file_name, int start, int count)
-{
-    unsigned char* data = (unsigned char *)malloc(count);
-    int buffer_size=count;
-    int sz=0;
-    if(start < 0 || count <= 0 ) {
-        return INCORRECT_PARAMETERS_ERROR;
-    }
-    int fd;
-    size_t nbytes;
-    int is_find=0;
-    file_block result;
-    fd = open(file_system_name, O_RDONLY);
-    if(fd==-1)
-        return UNKNOWN_ERROR;
-
-    nbytes = sizeof(file_block);
-    block_count = file_size(fd) / nbytes;
-    int offset = 0;
-    int temp_count = 0;
-    int counter = 0;
-    for(int index = 0; index < block_count; index++) {
-        lseek(fd, offset, SEEK_SET);
-        read(fd, &result, nbytes);
-        if(!(strcmp(result.file_name, file_name)) && !result.is_free) {
-            is_find=1;
-            if((temp_count <= start && start < temp_count + VALUE_SIZE) || counter) {
-                if((temp_count <= start && start < temp_count + VALUE_SIZE)) {
-                    int size = 0;
-                    if(count > VALUE_SIZE)
-                        size = VALUE_SIZE - start % VALUE_SIZE;
-                    else
-                        size = count;
-                    unsigned char* temp = (unsigned char*)malloc(size);
-                    //printf("%i\n",size);
-                    memcpy(temp, result.value + (start - temp_count), size);
-                    memcpy(data+sz, temp, size);
-                    sz+=size;
-                    //strcat(buffer, temp);
-                    count -= size;
-                } else {
-                    int size = 0;
-                    if(count > VALUE_SIZE)
-                        size = VALUE_SIZE;
-                    else
-                        size = count;
-                    unsigned char* temp = (unsigned char*)malloc(size);
-                    memcpy(temp, result.value, size);
-                    memcpy(data+sz, temp, size);
-                    sz+=size;
-                    //printf("%i\n",size);
-                    //strcat(buffer, temp);
-                    count -= size;
-                }
-
-                counter = 1;
-
-                if(count <= 0)
-                    break;
-            }
-            temp_count += VALUE_SIZE;
-
-            if(result.next == -1)
-                break;
-            else
-                offset = result.next * nbytes;
-        } else
-            offset += nbytes;
-
-    }
-
-    close(fd);
-    if(is_find){
-        memcpy(buffer, data, buffer_size);
-        return SUCCESSFUL_CODE;
-    }
-
-    return FILE_NAME_ERROR;
 }
 
 int write_file(char* file_name, void* value,int write_size)
@@ -510,6 +538,86 @@ int write_file(char* file_name, void* value,int write_size)
     }
     close(fd);
     return SUCCESSFUL_CODE;
+}
+/*
+int read_file(void* buffer,char* file_name, int start, int count)
+{
+    unsigned char* data = (unsigned char *)malloc(count);
+    int buffer_size=count;
+    int sz=0;
+    if(start < 0 || count <= 0 ) {
+        return INCORRECT_PARAMETERS_ERROR;
+    }
+    int fd;
+    size_t nbytes;
+    int is_find=0;
+    file_block result;
+    fd = open(file_system_name, O_RDONLY);
+    if(fd==-1)
+        return UNKNOWN_ERROR;
+
+    nbytes = sizeof(file_block);
+    block_count = file_size(fd) / nbytes;
+    int offset = 0;
+    int temp_count = 0;
+    int counter = 0;
+    for(int index = 0; index < block_count; index++) {
+        lseek(fd, offset, SEEK_SET);
+        read(fd, &result, nbytes);
+        if(!(strcmp(result.file_name, file_name)) && !result.is_free) {
+            is_find=1;
+            if((temp_count <= start && start < temp_count + VALUE_SIZE) || counter) {
+                if((temp_count <= start && start < temp_count + VALUE_SIZE)) {
+                    int size = 0;
+                    if(count > VALUE_SIZE)
+                        size = VALUE_SIZE - start % VALUE_SIZE;
+                    else
+                        size = count;
+                    unsigned char* temp = (unsigned char*)malloc(size);
+                    //printf("%i\n",size);
+                    memcpy(temp, result.value + (start - temp_count), size);
+                    memcpy(data+sz, temp, size);
+                    sz+=size;
+                    //strcat(buffer, temp);
+                    count -= size;
+                } else {
+                    int size = 0;
+                    if(count > VALUE_SIZE)
+                        size = VALUE_SIZE;
+                    else
+                        size = count;
+                    unsigned char* temp = (unsigned char*)malloc(size);
+                    memcpy(temp, result.value, size);
+                    memcpy(data+sz, temp, size);
+                    sz+=size;
+                    //printf("%i\n",size);
+                    //strcat(buffer, temp);
+                    count -= size;
+                }
+
+                counter = 1;
+
+                if(count <= 0)
+                    break;
+            }
+            temp_count += VALUE_SIZE;
+
+            if(result.next == -1)
+                break;
+            else
+                offset = result.next * nbytes;
+        } else
+            offset += nbytes;
+
+    }
+
+    close(fd);
+    if(is_find){
+        memcpy(buffer, data, buffer_size);
+        return SUCCESSFUL_CODE;
+    }
+
+    return FILE_NAME_ERROR;
 }
 
 int copy_file(char* file_name)
@@ -784,19 +892,43 @@ int search_free_block(int fd)
 
 int get_free_file_system_size(int fd)
 {
-    size_t nbytes;
+    size_t nbytes,cbytes;
     int offset = 0;
     new_file_block result;
     int free_size = 0;
     nbytes = sizeof(new_file_block);
+    cbytes = sizeof(file_catalog);
 
     block_count = file_size(fd) / nbytes;
 
+    int catlog_size = 0;
+
+    for(int i = 0; i < block_count; i++) {
+            lseek(fd, offset, SEEK_SET);
+            read(fd, &result, nbytes);
+            offset=result.next*nbytes;
+            catlog_size+=VALUE_SIZE;
+            if(result.next==-1)
+                break;
+    }
+    int file_count = (int)catlog_size/cbytes;
+
+    offset = 0;
+    int find=0;
     for(int index = 0; index < block_count; index++) {
         lseek(fd, offset, SEEK_SET);
         read(fd, &result, nbytes);
         if(result.free_size == VALUE_SIZE) {
-            free_size += sizeof(result.value);
+            for(int i = 0; i < file_count; i++) {
+                file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+                read_catalog_file(temp_buffer,fd,cbytes*i, cbytes);
+                file_catalog file_header =*(temp_buffer);
+                if(result.number==file_header.start)
+                    find=1;
+            }
+            if(!find)
+                free_size += VALUE_SIZE;
+            find=0;
         }
         offset += nbytes;
     }

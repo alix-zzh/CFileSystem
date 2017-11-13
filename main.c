@@ -16,7 +16,7 @@
 void tests(){
     init_tests();
     create_tests();
-   // delete_tests();
+    delete_tests();
   //  write_tests();
    // read_tests();
   //  rename_tests();
