@@ -99,9 +99,9 @@ void read_not_char_test()
 void read_struct_test()
 {
     int err;
-    int buffer_size=sizeof(file_block);
-    init_file_system("file_system", 1000);
-    file_block result;
+    int buffer_size=sizeof(new_file_block);
+    init_file_system("file_system", 100);
+    new_file_block result;
 
 
     memcpy(result.value, "LOL", 3);
@@ -109,17 +109,17 @@ void read_struct_test()
     err=write_file("test1",&result,buffer_size);
     assert(err == 0);
 
-    file_block* temp_buffer = (file_block *) malloc(buffer_size);
+    new_file_block* temp_buffer = (new_file_block *) malloc(buffer_size);
 
     memcpy(result.value, "Kek", 3);
     err=write_file("test1",&result,buffer_size);
+    //print_all_block();
     err=read_file(temp_buffer,"test1",buffer_size,buffer_size);
     assert(err == 0);
     char *str =&(temp_buffer)->value;
 
 
     assert(memcmp(result.value,str,3)==0);
-    //printf("%s %s\n",result.value,str);
 }
 
 void read_tests()

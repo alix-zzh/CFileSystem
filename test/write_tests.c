@@ -21,10 +21,11 @@ void write_not_enough_memory_test()
 
 void write_to_start_test()
 {
-    init_file_system("file_system", 20);
+    init_file_system("file_system", 8);
     int err = create_file("test1");
     err = write_file("test1", "test",strlen("test"));
     assert(err == 0);
+   // print_all_block();
 }
 
 void write_append_test()
@@ -35,6 +36,7 @@ void write_append_test()
     assert(err == 0);
     err = write_file("test1", "append text and smth ...",strlen("append text and smth ..."));
     assert(err == 0);
+
 }
 
 void write_tests()

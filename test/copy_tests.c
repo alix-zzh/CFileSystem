@@ -3,7 +3,7 @@
 #include <string.h>
 #include "../file_system.h"
 #include "copy_tests.h"
-/*
+
 void copy_file_not_find_test()
 {
     init_file_system("file_system", 20);
