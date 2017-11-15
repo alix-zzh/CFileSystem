@@ -116,10 +116,9 @@ void read_struct_test()
     //print_all_block();
     err=read_file(temp_buffer,"test1",buffer_size,buffer_size);
     assert(err == 0);
-    char *str =&(temp_buffer)->value;
+    new_file_block bl =*(temp_buffer);
 
-
-    assert(memcmp(result.value,str,3)==0);
+    assert(memcmp(result.value,bl.value,3)==0);
 }
 
 void read_tests()

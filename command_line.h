@@ -15,6 +15,8 @@
 #define EXIT 285600
 #define COMMAND_SIZE 10
 
+#define MAX_WRITE_READ_VALUE 1024
+
 int command_line();
 
 #endif // COMMAND_LINE_H_INCLUDED

@@ -61,6 +61,7 @@ int create_file(char* file_name)
     nbytes = sizeof(new_file_block);
     int offset = 0;
     int is_find = 0;
+    int is_free_file=0;
     block_count = file_size(fd) / nbytes;
 
     lseek(fd, offset, SEEK_SET);
@@ -103,6 +104,8 @@ int create_file(char* file_name)
             file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
             read_catalog_file(temp_buffer, fd, cbytes * i, cbytes);
             file_catalog file_header = *(temp_buffer);
+            if(file_header.is_free)
+                is_free_file=1;
             if(!strcmp(file_header.file_name, file_name) && !file_header.is_free)
                 return FILE_NAME_ERROR;
             if(file_header.is_free)
@@ -112,21 +115,41 @@ int create_file(char* file_name)
         memcpy(catalog.file_name, file_name, NAME_SIZE);
         catalog.is_free = 0;
         catalog.free_size = 0;
+        int temp_sz=cbytes;
+        if(is_free_file)
+            temp_sz=0;
         int sz = get_free_file_system_size(fd);
-        if(sz < cbytes + VALUE_SIZE)
+        if(sz < temp_sz + VALUE_SIZE)
             return NOT_ENOUGH_MEMORY;
+        file_catalog file_header;
+        if(!is_free_file){
+            write_catalog_file(fd, &catalog, cbytes);
+            int begin = search_free_block(fd);
 
-        write_catalog_file(fd, &catalog, cbytes);
-        int begin = search_free_block(fd);
 
+            file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
 
-        file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+            read_catalog_file(temp_buffer, fd, pos, cbytes);
+            file_header = *(temp_buffer);
 
-        read_catalog_file(temp_buffer, fd, pos, cbytes);
-        file_catalog file_header = *(temp_buffer);
+            file_header.start = begin;
+            if(is_free_file)
+                file_header.is_free = 0;
 
-        file_header.start = begin;
-        change_catalog_file(fd, &file_header, file_count * cbytes, cbytes);
+        }
+        else{
+            int begin = search_free_block(fd);
+            file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+
+            read_catalog_file(temp_buffer, fd, pos, cbytes);
+            file_header= *(temp_buffer);
+
+            file_header.start = begin;
+            file_header.is_free = 0;
+            file_header.free_size = 0;
+            memcpy(file_header.file_name, file_name, NAME_SIZE);
+        }
+        change_catalog_file(fd, &file_header, pos, cbytes);
 
     }
 
@@ -312,11 +335,9 @@ int read_catalog_file(void* buffer, int fd, int start, int count)
                 else
                     size = count;
                 unsigned char* temp = (unsigned char*)malloc(size);
-                //printf("%i\n",size);
                 memcpy(temp, result.value + (start - temp_count), size);
                 memcpy(data + sz, temp, size);
                 sz += size;
-                //strcat(buffer, temp);
                 count -= size;
             } else {
                 int size = 0;
@@ -328,8 +349,6 @@ int read_catalog_file(void* buffer, int fd, int start, int count)
                 memcpy(temp, result.value, size);
                 memcpy(data + sz, temp, size);
                 sz += size;
-                //printf("%i\n",size);
-                //strcat(buffer, temp);
                 count -= size;
             }
 
@@ -346,8 +365,6 @@ int read_catalog_file(void* buffer, int fd, int start, int count)
             offset = result.next * nbytes;
 
     }
-
-    //close(fd);
     memcpy(buffer, data, buffer_size);
     return SUCCESSFUL_CODE;
 
@@ -837,18 +854,6 @@ int copy_file(char* file_name)
 }
 
 
-int set_file_system_name(char* file_name)
-{
-    int fd = open(file_name, O_RDONLY);
-
-    int nbytes = sizeof(file_block);
-    if(fd==-1 || (file_size(fd) % nbytes))
-        return INCORRECT_FILE_SYSTEM_NAME;
-    close(fd);
-    file_system_name = file_name;
-    return SUCCESSFUL_CODE;
-}
-
 char* search_copy_name(char* file_name, int fd)
 {
     char copy_name[NAME_SIZE];
@@ -879,51 +884,108 @@ char* search_copy_name(char* file_name, int fd)
     return res;
 }
 
+*/
 char** get_files_name(){
     int fd = open(file_system_name, O_RDWR);
-    int nbytes = sizeof(file_block);
+
+    size_t nbytes;
+    int is_find = 0;
+    nbytes = sizeof(new_file_block);
+    int cbytes = sizeof(file_catalog);
+    block_count = file_size(fd) / nbytes;
+    new_file_block result;
     int block_count = file_size(fd) / nbytes;
     char file_name[NAME_SIZE][block_count];
 
-    file_block result;
 
-    int id = 0;
-    for(int index = 0; index < block_count; index++) {
+    int offset = 0;
+    int temp_count = 0;
+    int counter = 0;
+    int catlog_size=0;
+    int file_count=0;
+    int fl_count=0;
 
-        lseek(fd, index * nbytes, SEEK_SET);
-        read(fd, &result, nbytes);
 
-        if(result.is_start && !result.is_free){
-            memcpy(file_name[id], result.file_name, NAME_SIZE);
-            id++;
+    if(result.free_size != VALUE_SIZE){
+
+        for(int i = 0; i < block_count; i++) {
+            lseek(fd, offset, SEEK_SET);
+            read(fd, &result, nbytes);
+            offset = result.next * nbytes;
+            catlog_size += VALUE_SIZE;
+            if(result.next == -1)
+                break;
         }
+        file_count = (int)catlog_size / cbytes;
 
+
+        for(int i = 0; i < file_count; i++) {
+            file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+            read_catalog_file(temp_buffer, fd, cbytes * i, cbytes);
+            file_catalog file_header = *(temp_buffer);
+            if(!file_header.is_free){
+                memcpy(file_name[fl_count],file_header.file_name,NAME_SIZE);
+                fl_count++;
+            }
+
+
+        }
     }
-    char **res=(char **)malloc(block_count*sizeof(char*));
-    for(int i = 0; i < block_count; i++)
+    char **res=(char **)malloc(fl_count*sizeof(char*));
+    for(int i = 0; i < fl_count; i++)
         res[i] = (char *)malloc(NAME_SIZE);
 
-    for(int i = 0; i < block_count; ++i)
+    for(int i = 0; i < fl_count; ++i)
             memcpy(res[i], file_name[i], NAME_SIZE);
     close(fd);
     return res;
 }
 
 int get_files_count(){
-    int fd = open(file_system_name, O_RDWR);
-    int nbytes = sizeof(file_block);
+   int fd = open(file_system_name, O_RDWR);
+    if(fd == -1)
+        return UNKNOWN_ERROR;
+    size_t nbytes;
+    int is_find = 0;
+    nbytes = sizeof(new_file_block);
+    int cbytes = sizeof(file_catalog);
+    block_count = file_size(fd) / nbytes;
+    new_file_block result;
     int block_count = file_size(fd) / nbytes;
+    char file_name[NAME_SIZE][block_count];
 
-    file_block result;
 
-    int count = 0;
-    for(int index = 0; index < block_count; index++) {
+    int offset = 0;
+    int temp_count = 0;
+    int counter = 0;
+    int catlog_size=0;
+    int file_count=0;
+    int count=0;
+    lseek(fd, offset, SEEK_SET);
+    read(fd, &result, nbytes);
 
-        lseek(fd, index * nbytes, SEEK_SET);
-        read(fd, &result, nbytes);
+    if(result.free_size == VALUE_SIZE) {
+        return FILE_NAME_ERROR;
+    } else {
 
-        if(result.is_start && !result.is_free){
-            count++;
+        for(int i = 0; i < block_count; i++) {
+            lseek(fd, offset, SEEK_SET);
+            read(fd, &result, nbytes);
+            offset = result.next * nbytes;
+            catlog_size += VALUE_SIZE;
+            if(result.next == -1)
+                break;
+
+        }
+        file_count = (int)catlog_size / cbytes;
+
+        for(int i = 0; i < file_count; i++) {
+            file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
+            read_catalog_file(temp_buffer, fd, cbytes * i, cbytes);
+            file_catalog file_header = *(temp_buffer);
+            if(!file_header.is_free)
+                count++;
+
         }
 
     }
@@ -931,7 +993,6 @@ int get_files_count(){
     return count;
 }
 
-*/
 int file_size(int fd)
 {
     struct stat s;
@@ -991,7 +1052,7 @@ int get_free_file_system_size(int fd)
                 file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
                 read_catalog_file(temp_buffer, fd, cbytes * i, cbytes);
                 file_catalog file_header = *(temp_buffer);
-                if(result.number == file_header.start)
+                if(result.number == file_header.start && !file_header.is_free)
                     find = 1;
             }
             if(!find)
@@ -1001,6 +1062,18 @@ int get_free_file_system_size(int fd)
         offset += nbytes;
     }
     return free_size;
+}
+
+int set_file_system_name(char* file_name)
+{
+    int fd = open(file_name, O_RDONLY);
+
+    int nbytes = sizeof(new_file_block);
+    if(fd==-1 || (file_size(fd) % nbytes))
+        return INCORRECT_FILE_SYSTEM_NAME;
+    close(fd);
+    file_system_name = file_name;
+    return SUCCESSFUL_CODE;
 }
 
 int print_all_block()

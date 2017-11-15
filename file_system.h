@@ -12,7 +12,6 @@
 #define FILE_NOT_FOUND -1
 #define INCORRECT_FILE_SYSTEM_NAME -1
 
-#define MAX_WRITE_READ_VALUE 1024
 #define NAME_SIZE 9
 #define VALUE_SIZE 8
 
@@ -51,6 +50,10 @@ int     write_file(char* file_name, void* value,int write_size);
 int     read_file(void* buffer,char* file_name, int start, int count);
 int     copy_file(char* file_name);
 int     rename_file(char* file_name, char* new_name);
+int     write_catalog_file(int fd, void* value, int write_size);
+int     change_catalog_file(int fd, void* buffer, int start, int count);
+int     read_catalog_file(void* buffer, int fd, int start, int count);
+int     search_free_block(int fd);
 
 char*   search_copy_name(char* file_name, int fd);
 int     file_size(int fd);

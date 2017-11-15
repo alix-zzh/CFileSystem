@@ -63,7 +63,7 @@ int command_line()
         case COPY:
             scanf("%s", file_name);
             if(file_system_set) {
-                err = copy_file(file_name);
+                //err = copy_file(file_name);
 
                 if(err == NOT_ENOUGH_MEMORY) {
                     printf("Memory is not enough to copy file\n");

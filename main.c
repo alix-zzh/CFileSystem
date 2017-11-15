@@ -9,6 +9,7 @@
 #include "test/copy_tests.h"
 #include "test/rename_tests.h"
 #include "test/load_test.h"
+#include "test/file_name_tests.h"
 #include "command_line.h"
 
 
@@ -20,6 +21,7 @@ void tests(){
     write_tests();
     read_tests();
     rename_tests();
+    file_names_tests();
    // copy_tests();
     printf("Test complete\n");
 }
@@ -31,5 +33,5 @@ int main(int argc, char **argv)
 
     tests();
     //load_test();
-    //command_line();
+    command_line();
 }
