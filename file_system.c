@@ -829,7 +829,7 @@ int copy_file(char* file_name)
         char* copy_name = search_copy_name(file_name, fd,file_count);
         offset = start_pos*nbytes;
         int prev = -1;
-        if(free_size > copy_size+cbytes) {
+        if(free_size >= copy_size+cbytes) {
             file_catalog file_header;
             if(!is_free_file){
                 write_catalog_file(fd, &file_header, cbytes);

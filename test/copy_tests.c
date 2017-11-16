@@ -13,7 +13,7 @@ void copy_file_not_find_test()
 
 void copy_not_enough_memory_test()
 {
-    init_file_system("file_system", 16);
+    init_file_system("file_system", 8);
     create_file("test1");
     write_file("test1", "big test",strlen("big test"));
     int err=copy_file("test1");
@@ -47,6 +47,19 @@ void copy_value_test()
     assert(memcmp(text,temp_buffer,strlen(text))==0);
 }
 
+void copy_full_test()
+{
+    init_file_system("file_system", 16);
+    char* text="big stri";
+    create_file("test1");
+    write_file("test1",text,strlen(text));
+    int buffer_size=47;
+    int err=copy_file("test1");
+
+    char* temp_buffer = (char *) malloc(strlen(text));
+    read_file(temp_buffer,"test1(1)",0,strlen(text));
+    assert(memcmp(text,temp_buffer,strlen(text))==0);
+}
 
 void copy_tests()
 {
@@ -54,4 +67,5 @@ void copy_tests()
     copy_not_enough_memory_test();
     copy_currect_name_test();
     copy_value_test();
+    copy_full_test();
 }
