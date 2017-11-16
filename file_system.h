@@ -12,7 +12,7 @@
 #define FILE_NOT_FOUND -1
 #define INCORRECT_FILE_SYSTEM_NAME -1
 
-#define NAME_SIZE 9
+#define NAME_SIZE 13
 #define VALUE_SIZE 8
 
 int     block_count;
@@ -39,7 +39,7 @@ typedef struct catalog {
     char file_name[NAME_SIZE];
     int  start;
     int  is_free;
-    int  free_size;
+  //  int  free_size;
 } file_catalog;
 
 int     command_line();
@@ -55,7 +55,7 @@ int     change_catalog_file(int fd, void* buffer, int start, int count);
 int     read_catalog_file(void* buffer, int fd, int start, int count);
 int     search_free_block(int fd);
 
-char*   search_copy_name(char* file_name, int fd);
+char* search_copy_name(char* file_name, int fd,int file_count);
 int     file_size(int fd);
 int     get_free_file_system_size(int fd);
 int    set_file_system_name(char* file_name);

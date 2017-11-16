@@ -15,9 +15,9 @@ void get_file_names_correct_test()
     int amount_of_files = get_files_count();
     assert(amount_of_files == 3);
     char** file_names = get_files_name();
-    assert(memcmp(file_names[0],"test1",NAME_SIZE) == 0);
-    assert(memcmp(file_names[1],"test2",NAME_SIZE) == 0);
-    assert(memcmp(file_names[2],"test3",NAME_SIZE) == 0);
+    assert(memcmp(file_names[0],"test1",strlen("test1")) == 0);
+    assert(memcmp(file_names[1],"test2",strlen("test2")) == 0);
+    assert(memcmp(file_names[2],"test3",strlen("test3")) == 0);
 }
 
 void get_file_names_delete_correct_test()
