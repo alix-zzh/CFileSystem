@@ -17,29 +17,17 @@
 
 int     block_count;
 char*   file_system_name;
-/*
+
 typedef struct block {
-    unsigned char file_name[NAME_SIZE];
-    int  number;
     int  next;
     char value[VALUE_SIZE];
-    int  is_free;
-    int  is_start;
     int  free_size;
 } file_block;
-*/
-typedef struct new_block {
-    int  next;
-    char value[VALUE_SIZE];
-    int  free_size;
-    int  number;
-} new_file_block;
 
 typedef struct catalog {
     char file_name[NAME_SIZE];
     int  start;
     int  is_free;
-  //  int  free_size;
 } file_catalog;
 
 int     command_line();

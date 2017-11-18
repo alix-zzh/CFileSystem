@@ -93,8 +93,7 @@ int command_line()
             fgets(value, MAX_WRITE_READ_VALUE, stdin);
             value++;
             if(file_system_set) {
-                err = write_file(file_name, value, strlen(value));
-
+                err = write_file(file_name, value, strlen(value)-1);
                 if(err == NOT_ENOUGH_MEMORY) {
                     printf("Memory is not enough to write in\n");
                 }
@@ -157,7 +156,7 @@ int command_line()
             exit = 0;
             break;
         default:
-            printf("No such command  %i\n",code);
+            printf("No such command  \"%s\"\n",command);
 
         }
     }

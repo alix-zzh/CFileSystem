@@ -17,17 +17,17 @@ int init_file_system(char* file_name, int system_size)
         return INCORRECT_PARAMETERS_ERROR;
     }
     int fd;
-    size_t nbytes = sizeof(new_file_block);
+    size_t nbytes = sizeof(file_block);
     size_t cbytes = sizeof(file_catalog);
-    new_file_block result;
+    file_block result;
     const mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     fd = creat(file_name, mode);
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    system_size = (int)ceil(system_size / VALUE_SIZE);
+    system_size = (int)ceil((float)system_size / VALUE_SIZE);
     double temp = (system_size * cbytes);
-    int block_from_catalog = (int)ceil(temp / VALUE_SIZE);
+    int block_from_catalog = (int)ceil((float)temp / VALUE_SIZE);
 
     system_size += block_from_catalog;
     ftruncate(fd, (system_size ) * nbytes);
@@ -38,7 +38,7 @@ int init_file_system(char* file_name, int system_size)
 
     for(int index = 0; index < system_size ; index++) {
         result.next = -1;
-        result.number = index;
+      //  result.number = index;
         result.free_size = VALUE_SIZE;
         write(fd, &result, nbytes);
     }
@@ -53,12 +53,12 @@ int create_file(char* file_name)
 {
     int fd;
     size_t nbytes;
-    new_file_block result;
+    file_block result;
     fd = open(file_system_name, O_RDWR);
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     int offset = 0;
     int is_find = 0;
     int is_free_file=0;
@@ -157,7 +157,7 @@ int write_catalog_file(int fd, void* value, int write_size)
 {
     size_t nbytes;
     int offset = 0;
-    new_file_block result;
+    file_block result;
     int is_find = 0;
     int start_pos = 0;
     int size = get_free_file_system_size(fd);
@@ -165,7 +165,7 @@ int write_catalog_file(int fd, void* value, int write_size)
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
 
     int prev = -1;
@@ -183,7 +183,7 @@ int write_catalog_file(int fd, void* value, int write_size)
             offset = result.next * nbytes;
         else {
             for(int char_offset = 0; char_offset < write_size; ) {
-                prev = result.number;
+                prev = (offset/nbytes);
                 if(result.free_size == 0) {
                     for(; index < block_count; index++) {
                         lseek(fd, index * nbytes, SEEK_SET);
@@ -192,10 +192,10 @@ int write_catalog_file(int fd, void* value, int write_size)
                             if(prev == -1) {
                                 result.next = -1;
                             } else {
-                                new_file_block prev_block;
+                                file_block prev_block;
                                 lseek(fd, prev * nbytes, SEEK_SET);
                                 read(fd, &prev_block, nbytes);
-                                prev_block.next = result.number;
+                                prev_block.next = index;
                                 lseek(fd, prev * nbytes, SEEK_SET);
                                 write(fd, &prev_block, nbytes);
 
@@ -247,11 +247,11 @@ int change_catalog_file(int fd, void* buffer, int start, int count)
     }
     size_t nbytes;
     int is_find = 0;
-    new_file_block result;
+    file_block result;
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
     int offset = 0;
     int temp_count = 0;
@@ -311,12 +311,12 @@ int read_catalog_file(void* buffer, int fd, int start, int count)
     }
     size_t nbytes;
     int is_find = 0;
-    new_file_block result;
+    file_block result;
     fd = open(file_system_name, O_RDONLY);
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
     int offset = 0;
     int temp_count = 0;
@@ -372,12 +372,12 @@ int delete_file(char* file_name)
 {
     int fd;
     size_t nbytes;
-    new_file_block result;
+    file_block result;
     fd = open(file_system_name, O_RDWR);
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     int offset = 0;
     int is_find = 0;
     block_count = file_size(fd) / nbytes;
@@ -448,7 +448,7 @@ int write_file(char* file_name, void* value, int write_size)
     int fd;
     size_t nbytes;
     int offset = 0;
-    new_file_block result;
+    file_block result;
     int is_find = 0;
     int start_pos = 0;
     int size = 0;
@@ -457,7 +457,7 @@ int write_file(char* file_name, void* value, int write_size)
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
 
     lseek(fd, offset, SEEK_SET);
@@ -516,7 +516,7 @@ int write_file(char* file_name, void* value, int write_size)
                     offset = result.next * nbytes;
                 else {
                     for(int char_offset = 0; char_offset < write_size; ) {
-                        prev = result.number;
+                        prev = (offset/nbytes);
                         if(result.free_size == 0) {
                             for(; index < block_count; index++) {
                                 lseek(fd, index * nbytes, SEEK_SET);
@@ -525,10 +525,10 @@ int write_file(char* file_name, void* value, int write_size)
                                     if(prev == -1) {
                                         result.next = -1;
                                     } else {
-                                        new_file_block prev_block;
+                                        file_block prev_block;
                                         lseek(fd, prev * nbytes, SEEK_SET);
                                         read(fd, &prev_block, nbytes);
-                                        prev_block.next = result.number;
+                                        prev_block.next = index;
                                         lseek(fd, prev * nbytes, SEEK_SET);
                                         write(fd, &prev_block, nbytes);
 
@@ -587,12 +587,12 @@ int read_file(void* buffer, char* file_name, int start, int count)
     int fd;
     size_t nbytes;
     int is_find = 0;
-    new_file_block result;
+    file_block result;
     fd = open(file_system_name, O_RDONLY);
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     int cbytes = sizeof(file_catalog);
     block_count = file_size(fd) / nbytes;
     int offset = 0;
@@ -689,12 +689,12 @@ int rename_file(char* file_name, char* new_name)
 {
     int fd;
     size_t nbytes;
-    new_file_block result;
+    file_block result;
     fd = open(file_system_name, O_RDWR);
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     int offset = 0;
     int is_find = 0;
     block_count = file_size(fd) / nbytes;
@@ -758,7 +758,7 @@ int copy_file(char* file_name)
     int fd;
     size_t nbytes;
     int offset = 0;
-    new_file_block result;
+    file_block result;
     int is_find = 0;
     int start_pos = 0;
     int size = 0;
@@ -771,7 +771,7 @@ int copy_file(char* file_name)
     if(fd == -1)
         return UNKNOWN_ERROR;
 
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     block_count = file_size(fd) / nbytes;
 
     lseek(fd, offset, SEEK_SET);
@@ -864,7 +864,7 @@ int copy_file(char* file_name)
                 lseek(fd, offset, SEEK_SET);
                 read(fd, &result, nbytes);
                 for(; index < block_count; index++) {
-                    new_file_block block;
+                    file_block block;
                     lseek(fd, index * nbytes, SEEK_SET);
                     read(fd, &block, nbytes);
 
@@ -874,17 +874,17 @@ int copy_file(char* file_name)
                         if(prev == -1) {
                             block.next = -1;
                         } else {
-                            new_file_block pr_block;
+                            file_block pr_block;
                             lseek(fd, prev * nbytes, SEEK_SET);
                             read(fd, &pr_block, nbytes);
 
-                            pr_block.next=block.number;
+                            pr_block.next=index;
 
                             lseek(fd, prev * nbytes, SEEK_SET);
                             write(fd, &pr_block, nbytes);
 
                         }
-                        prev = block.number;
+                        prev = index;
 
 
                         lseek(fd, index * nbytes, SEEK_SET);
@@ -918,7 +918,7 @@ char* search_copy_name(char* file_name, int fd,int file_count)
 
     file_catalog result;
     int cbytes = sizeof(file_catalog);
-    int nbytes = sizeof(new_file_block);
+    int nbytes = sizeof(file_block);
     int block_count = file_size(fd) / nbytes;
     for(int index = 0; index < file_count; index++) {
         int is_find = 0;
@@ -949,10 +949,10 @@ char** get_files_name(){
 
     size_t nbytes;
     int is_find = 0;
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     int cbytes = sizeof(file_catalog);
     block_count = file_size(fd) / nbytes;
-    new_file_block result;
+    file_block result;
     int block_count = file_size(fd) / nbytes;
     char file_name[NAME_SIZE][block_count];
 
@@ -1006,10 +1006,10 @@ int get_files_count(){
         return UNKNOWN_ERROR;
     size_t nbytes;
     int is_find = 0;
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     int cbytes = sizeof(file_catalog);
     block_count = file_size(fd) / nbytes;
-    new_file_block result;
+    file_block result;
     int block_count = file_size(fd) / nbytes;
     char file_name[NAME_SIZE][block_count];
 
@@ -1064,8 +1064,8 @@ int file_size(int fd)
 int search_free_block(int fd)
 {
     size_t nbytes;
-    new_file_block result;
-    nbytes = sizeof(new_file_block);
+    file_block result;
+    nbytes = sizeof(file_block);
     int offset = 0;
     int block_count = file_size(fd) / nbytes;
     int index;
@@ -1082,9 +1082,9 @@ int get_free_file_system_size(int fd)
 {
     size_t nbytes, cbytes;
     int offset = 0;
-    new_file_block result;
+    file_block result;
     int free_size = 0;
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     cbytes = sizeof(file_catalog);
 
     block_count = file_size(fd) / nbytes;
@@ -1111,7 +1111,7 @@ int get_free_file_system_size(int fd)
                 file_catalog* temp_buffer = (file_catalog*)malloc(cbytes);
                 read_catalog_file(temp_buffer, fd, cbytes * i, cbytes);
                 file_catalog file_header = *(temp_buffer);
-                if(result.number == file_header.start && !file_header.is_free)
+                if((offset/nbytes) == file_header.start && !file_header.is_free)
                     find = 1;
             }
             if(!find)
@@ -1127,7 +1127,7 @@ int set_file_system_name(char* file_name)
 {
     int fd = open(file_name, O_RDONLY);
 
-    int nbytes = sizeof(new_file_block);
+    int nbytes = sizeof(file_block);
     if(fd==-1 || (file_size(fd) % nbytes))
         return INCORRECT_FILE_SYSTEM_NAME;
     close(fd);
@@ -1140,9 +1140,9 @@ int print_all_block()
     int fd = open(file_system_name, O_RDWR);
     size_t nbytes, cbytes;
     int offset = 0;
-    new_file_block result;
+    file_block result;
     int free_size = 0;
-    nbytes = sizeof(new_file_block);
+    nbytes = sizeof(file_block);
     cbytes = sizeof(file_catalog);
 
     block_count = file_size(fd) / nbytes;
@@ -1152,7 +1152,7 @@ int print_all_block()
     for(int i = 0; i < block_count; i++) {
         lseek(fd, i * nbytes, SEEK_SET);
         read(fd, &result, nbytes);
-        printf("%s %i %i %i\n", result.value, result.number, result.next, result.free_size);
+//        printf("%s %i %i %i\n", result.value, result.number, result.next, result.free_size);
     }
     close(fd);
 
