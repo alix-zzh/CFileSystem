@@ -14,7 +14,7 @@
 
 #define NAME_SIZE 13
 #define VALUE_SIZE 8
-#define BLOCK_COUNT 150
+#define BLOCK_COUNT 256
 
 int     block_count;
 char*   file_system_name;

@@ -1259,7 +1259,11 @@ int unmmaped()
         if (msync(fdmap, mmaped_size, MS_SYNC) == -1) {
             return UNKNOWN_ERROR;
         }
-        munmap(fdmap, mmaped_size);
+        if (munmap(fdmap, mmaped_size) == -1)
+        {
+            return UNKNOWN_ERROR;
+
+        }
         is_mmaped = 0;
         mmaped_size = 0;
     }
