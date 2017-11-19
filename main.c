@@ -16,13 +16,13 @@
 
 void tests(){
     init_tests();
-    create_tests();
-    delete_tests();
-    write_tests();
-    read_tests();
-    rename_tests();
-    file_names_tests();
-    copy_tests();
+  //  create_tests();
+  //  delete_tests();
+  //  write_tests();
+ //   read_tests();
+  //  rename_tests();
+   // file_names_tests();
+  //  copy_tests();
     printf("Test complete\n");
 }
 

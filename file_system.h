@@ -14,9 +14,16 @@
 
 #define NAME_SIZE 13
 #define VALUE_SIZE 8
+#define BLOCK_COUNT 150
 
 int     block_count;
 char*   file_system_name;
+void*   fdmap;
+int     is_mmaped;
+int     mmaped_size;
+int     full_file_size;
+
+int     current_offset;
 
 typedef struct block {
     int  next;
@@ -43,11 +50,12 @@ int     change_catalog_file(int fd, void* buffer, int start, int count);
 int     read_catalog_file(void* buffer, int fd, int start, int count);
 int     search_free_block(int fd);
 
-char* search_copy_name(char* file_name, int fd,int file_count);
+char*   search_copy_name(char* file_name, int fd,int file_count);
 int     file_size(int fd);
 int     get_free_file_system_size(int fd);
-int    set_file_system_name(char* file_name);
+int     set_file_system_name(char* file_name);
 char**  get_files_name();
 int     get_files_count();
+int    unmmaped();
 
 #endif // FILE_SYSTEM_H_INCLUDED

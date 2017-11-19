@@ -153,6 +153,7 @@ int command_line()
             printf("init: name, size\nset_system: name\ntouch: name\nrm: name\ncopy: name\nmv: name\nwrite: name, value\nread: name, begin, amount\ndir\n");
             break;
         case EXIT:
+            unmmaped();
             exit = 0;
             break;
         default:
