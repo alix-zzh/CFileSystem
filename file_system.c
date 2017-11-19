@@ -430,6 +430,8 @@ int delete_file(char* file_name)
                 lseek(fd, offset, SEEK_SET);
                 read(fd, &result, nbytes);
                 result.free_size = VALUE_SIZE;
+                lseek(fd, offset, SEEK_SET);
+                write(fd, &result, nbytes);
                 if(result.next == -1)
                     break;
                 offset = result.next * nbytes;
@@ -635,8 +637,8 @@ int read_file(void* buffer, char* file_name, int start, int count)
                 if((temp_count <= start && start < temp_count + VALUE_SIZE) || counter) {
                     if((temp_count <= start && start < temp_count + VALUE_SIZE)) {
                         int size = 0;
-                        if(count > VALUE_SIZE)
-                            size = VALUE_SIZE - start % VALUE_SIZE;
+                        if(count >= VALUE_SIZE-result.free_size)
+                            size = VALUE_SIZE-result.free_size - start % VALUE_SIZE;
                         else
                             size = count;
                         unsigned char* temp = (unsigned char*)malloc(size);
@@ -646,10 +648,11 @@ int read_file(void* buffer, char* file_name, int start, int count)
                         count -= size;
                     } else {
                         int size = 0;
-                        if(count > VALUE_SIZE)
-                            size = VALUE_SIZE;
+                        if(count >= VALUE_SIZE-result.free_size)
+                            size = VALUE_SIZE-result.free_size;
                         else
                             size = count;
+
                         unsigned char* temp = (unsigned char*)malloc(size);
                         memcpy(temp, result.value, size);
                         memcpy(data + sz, temp, size);
@@ -911,7 +914,6 @@ int copy_file(char* file_name)
     return SUCCESSFUL_CODE;
 }
 
-
 char* search_copy_name(char* file_name, int fd,int file_count)
 {
     char copy_name[NAME_SIZE];
@@ -943,7 +945,6 @@ char* search_copy_name(char* file_name, int fd,int file_count)
     return res;
 }
 
-
 char** get_files_name(){
     int fd = open(file_system_name, O_RDWR);
 
@@ -956,6 +957,8 @@ char** get_files_name(){
     int block_count = file_size(fd) / nbytes;
     char file_name[NAME_SIZE][block_count];
 
+    lseek(fd, 0, SEEK_SET);
+    read(fd, &result, nbytes);
 
     int offset = 0;
     int temp_count = 0;
@@ -1152,7 +1155,7 @@ int print_all_block()
     for(int i = 0; i < block_count; i++) {
         lseek(fd, i * nbytes, SEEK_SET);
         read(fd, &result, nbytes);
-//        printf("%s %i %i %i\n", result.value, result.number, result.next, result.free_size);
+        printf("%s %i %i %i\n", result.value, block_count, result.next, result.free_size);
     }
     close(fd);
 

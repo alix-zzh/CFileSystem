@@ -13,7 +13,7 @@ void copy_file_not_find_test()
 
 void copy_not_enough_memory_test()
 {
-    init_file_system("file_system", 8);
+    init_file_system("file_system", VALUE_SIZE);
     create_file("test1");
     write_file("test1", "big test",strlen("big test"));
     int err=copy_file("test1");
@@ -22,7 +22,7 @@ void copy_not_enough_memory_test()
 
 void copy_currect_name_test()
 {
-    init_file_system("file_system", 64);
+    init_file_system("file_system", 3*VALUE_SIZE);
     create_file("test1");
     write_file("test1", "big test",strlen("big test"));
     int err=copy_file("test1");
@@ -49,11 +49,10 @@ void copy_value_test()
 
 void copy_full_test()
 {
-    init_file_system("file_system", 16);
+    init_file_system("file_system", 2*VALUE_SIZE);
     char* text="big stri";
     create_file("test1");
     write_file("test1",text,strlen(text));
-    int buffer_size=47;
     int err=copy_file("test1");
 
     char* temp_buffer = (char *) malloc(strlen(text));

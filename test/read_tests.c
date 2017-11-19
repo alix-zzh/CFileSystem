@@ -52,7 +52,6 @@ void read_center_correct_test()
     create_file("test1");
     err=write_file("test1",text,strlen(text));
     int buffer_size=10;
-
     char* temp_buffer = (char *) malloc(buffer_size);
     err=read_file(temp_buffer,"test1",5,buffer_size);
     assert(err == 0);
@@ -121,6 +120,37 @@ void read_struct_test()
     assert(memcmp(result.value,bl.value,3)==0);
 }
 
+void read_complex_test()
+{
+    int err;
+    init_file_system("file_system", 8);
+
+    char* str="тест";
+    err=create_file("тест");
+    assert(err == 0);
+    err=write_file("тест",str,strlen(str));
+    assert(err == 0);
+
+    char* temp_buffer = (char *) malloc(strlen(str));
+    err=read_file(temp_buffer,"тест",0,strlen(str));
+    assert(err == 0);
+    assert(memcmp(str,temp_buffer,strlen(str))==0);
+
+    err=delete_file("тест");
+    assert(err == 0);
+    err=create_file("test1");
+    assert(err == 0);
+    err=read_file(temp_buffer,"test1",0,strlen(str));
+    assert(err == 0);
+    assert(strlen(temp_buffer)==0);
+    //print_all_block();
+  //  err=read_file(temp_buffer,"test1",buffer_size,buffer_size);
+  //  assert(err == 0);
+   // file_block bl =*(temp_buffer);
+
+    //assert(memcmp(result.value,bl.value,3)==0);
+}
+
 void read_tests()
 {
     read_file_name_error_test();
@@ -130,5 +160,6 @@ void read_tests()
     read_end_correct_test();
     read_not_char_test();
     read_struct_test();
+    read_complex_test();
 
 }

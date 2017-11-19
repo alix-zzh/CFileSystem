@@ -15,7 +15,7 @@
 
 
 void tests(){
-  //  init_tests();
+    init_tests();
     create_tests();
     delete_tests();
     write_tests();
