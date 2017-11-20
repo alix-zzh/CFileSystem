@@ -45,17 +45,18 @@ int     write_file(char* file_name, void* value,int write_size);
 int     read_file(void* buffer,char* file_name, int start, int count);
 int     copy_file(char* file_name);
 int     rename_file(char* file_name, char* new_name);
-int     write_catalog_file(int fd, void* value, int write_size);
-int     change_catalog_file(int fd, void* buffer, int start, int count);
-int     read_catalog_file(void* buffer, int fd, int start, int count);
-int     search_free_block(int fd);
+int     write_catalog_file(void* value, int write_size);
+int     change_catalog_file(void* buffer, int start, int count);
+int     read_catalog_file(void* buffer, int start, int count);
+int     search_free_block();
 
-char*   search_copy_name(char* file_name, int fd,int file_count);
-int     file_size(int fd);
-int     get_free_file_system_size(int fd);
+char*   search_copy_name(char* file_name,int file_count);
+int     file_size();
+int     get_free_file_system_size();
 int     set_file_system_name(char* file_name);
 char**  get_files_name();
 int     get_files_count();
-int    unmmaped();
+int     unmmaped();
+int     set_mmaped(int offset);
 
 #endif // FILE_SYSTEM_H_INCLUDED
