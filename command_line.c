@@ -7,7 +7,7 @@
 
 int command_line()
 {
-    char* command = (char*)malloc(COMMAND_SIZE * sizeof(char));
+    char* command = (char*)malloc(MAX_WRITE_READ_VALUE * sizeof(char));
     int file_system_set = 0;
     int exit = 1;
     while(exit) {
@@ -23,11 +23,16 @@ int command_line()
         char* file_name = (char*)malloc(NAME_SIZE * sizeof(char));
         switch(code) {
         case INIT:
-            scanf("%s", file_name);
+            err = read_string(file_name);
+            file_name[strlen(file_name)-1] = 0;
+            memmove(file_name, file_name+1, strlen(file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             int system_size;
             scanf("%d", &system_size);
             err = init_file_system(file_name, system_size);
-
             if(err == INCORRECT_PARAMETERS_ERROR) {
                 printf("Wrong parameters\n");
             }
@@ -37,9 +42,16 @@ int command_line()
             if(err == SUCCESSFUL_CODE) {
                 file_system_set = 1;
             }
+            free(file_name);
             break;
         case SET:
-            scanf("%s", file_name);
+            err = read_string(file_name);
+            file_name[strlen(file_name)-1] = 0;
+            memmove(file_name, file_name+1, strlen(file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             err = set_file_system_name(file_name);
 
             if(err == INCORRECT_FILE_SYSTEM_NAME) {
@@ -48,9 +60,38 @@ int command_line()
             if(err == SUCCESSFUL_CODE) {
                 file_system_set = 1;
             }
+            free(file_name);
+            break;
+        case CREATE:
+            ;
+            char* name_of_new_file = (char*)malloc(NAME_SIZE);
+            err = read_string(name_of_new_file);
+            name_of_new_file[strlen(name_of_new_file)-1] = 0;
+            memmove(name_of_new_file, name_of_new_file+1, strlen(name_of_new_file));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
+            if(file_system_set) {
+                err = create_file(name_of_new_file);
+                if(err == FILE_NAME_ERROR) {
+                    printf("Error with name of file\n");
+                }
+                if(err == NOT_ENOUGH_MEMORY) {
+                    printf("Memory is not enough to create file\n");
+                }
+            } else
+                printf("Set or init file system\n");
+            free(name_of_new_file);
             break;
         case RM:
-            scanf("%s", file_name);
+            err = read_string(file_name);
+            file_name[strlen(file_name)-1] = 0;
+            memmove(file_name, file_name+1, strlen(file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             if(file_system_set) {
                 err = delete_file(file_name);
 
@@ -59,11 +100,18 @@ int command_line()
                 }
             } else
                 printf("Set or init file system\n");
+            free(file_name);
             break;
         case COPY:
-            scanf("%s", file_name);
+            err = read_string(file_name);
+            file_name[strlen(file_name)-1] = 0;
+            memmove(file_name, file_name+1, strlen(file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             if(file_system_set) {
-                //err = copy_file(file_name);
+                err = copy_file(file_name);
 
                 if(err == NOT_ENOUGH_MEMORY) {
                     printf("Memory is not enough to copy file\n");
@@ -73,11 +121,24 @@ int command_line()
                 }
             } else
                 printf("Set or init file system\n");
+            free(file_name);
             break;
         case MV:
-            scanf("%s", file_name);
+            err = read_string(file_name);
+            file_name[strlen(file_name)-1] = 0;
+            memmove(file_name, file_name+1, strlen(file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             char* new_file_name = (char*)malloc(NAME_SIZE * sizeof(char*));
-            scanf("%s", new_file_name);
+            err = read_string(new_file_name);
+            new_file_name[strlen(new_file_name)-1] = 0;
+            memmove(new_file_name, new_file_name+1, strlen(new_file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             if(file_system_set) {
                 err = rename_file(file_name, new_file_name);
 
@@ -86,14 +147,28 @@ int command_line()
                 }
             } else
                 printf("Set or init file system\n");
+            free(file_name);
+            free(new_file_name);
             break;
         case WRITE:
-            scanf("%s", file_name);
+            err = read_string(file_name);
+            file_name[strlen(file_name)-1] = 0;
+            memmove(file_name, file_name+1, strlen(file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             char* value = (char*)malloc(MAX_WRITE_READ_VALUE * sizeof(char));
-            fgets(value, MAX_WRITE_READ_VALUE, stdin);
-            value++;
+            err = read_string(value);
+            value[strlen(value)-1] = 0;
+            memmove(value, value+1, strlen(value));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             if(file_system_set) {
-                err = write_file(file_name, value, strlen(value)-1);
+                err = write_file(file_name, value, strlen(value));
+
                 if(err == NOT_ENOUGH_MEMORY) {
                     printf("Memory is not enough to write in\n");
                 }
@@ -102,9 +177,17 @@ int command_line()
                 }
             } else
                 printf("Set or init file system\n");
+            free(file_name);
+            free(value);
             break;
         case READ:
-            scanf("%s", file_name);
+            err = read_string(file_name);
+            file_name[strlen(file_name)-1] = 0;
+            memmove(file_name, file_name+1, strlen(file_name));
+            if(err == WRONG_PARAMETERS){
+                printf("Wrong parameters\n");
+                break;
+            }
             int start;
             scanf("%d", &start);
             int count;
@@ -124,20 +207,8 @@ int command_line()
                 }
             } else
                 printf("Set or init file system\n");
-            break;
-        case TOUCH:
-            scanf("%s", file_name);
-            if(file_system_set) {
-                err = create_file(file_name);
-
-                if(err == FILE_NAME_ERROR) {
-                    printf("Error with name of file\n");
-                }
-                if(err == NOT_ENOUGH_MEMORY) {
-                    printf("Memory is not enough to create file\n");
-                }
-            } else
-                printf("Set or init file system\n");
+            free(file_name);
+            free(read_value);
             break;
         case LS:
             if(file_system_set) {
@@ -150,17 +221,37 @@ int command_line()
                 printf("Set or init file system\n");
             break;
         case HELP:
-            printf("init: name, size\nset_system: name\ntouch: name\nrm: name\ncopy: name\nmv: name\nwrite: name, value\nread: name, begin, amount\ndir\n");
+            printf("init: name, size\nset_system: name\ncreate: name\nrm: name\ncopy: name\nmv: name\nwrite: name, value\nread: name, begin, amount\nls\n");
             break;
         case EXIT:
-            unmmaped();
             exit = 0;
+            unmmaped();
             break;
         default:
-            printf("No such command  \"%s\"\n",command);
+            printf("No such command %i %s\n",code,command);
 
         }
     }
+    free(command);
 
     return SUCCESSFUL_CODE;
+}
+
+int read_string(char* name){
+    char* temp = (char*)malloc(NAME_SIZE);
+    while(1){
+        scanf("%s", temp);
+        if(strlen(name)!=0){
+            strcat(name, " ");
+        }
+        strcat(name, temp);
+        if(name[0] != '"'){
+            return WRONG_PARAMETERS;
+        }
+        if(name[strlen(name)-1] == '"'){
+            break;
+        }
+    }
+
+    return 0;
 }
